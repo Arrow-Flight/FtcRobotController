@@ -8,7 +8,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.TestBench;
 
 @Disabled
 @TeleOp
-public class TouchSensorPractice extends OpMode {
+public class DCMotorPractic extends OpMode {
     TestBench bench = new TestBench();
 
     @Override
@@ -18,12 +18,14 @@ public class TouchSensorPractice extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Touch Sensor State", bench.getTouchSensorState());
-        if (bench.isTouchSensorReleased()) {
-            telemetry.addData("Touch Sensor Released?", "Pressed!");
+        if (bench.getTouchSensorState()) {
+            bench.setMotorSpeed(0.5);
         }
         else {
-            telemetry.addData("Touch Sensor Released?", "Not Pressed");
+            bench.setMotorSpeed(0.0); //stops the motor
         }
+
+        bench.setMotorSpeed(0.5);
+        telemetry.addData("Motor Revs", bench.getMotorRevs());
     }
 }
