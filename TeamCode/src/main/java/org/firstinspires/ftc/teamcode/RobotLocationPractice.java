@@ -24,6 +24,10 @@ public class RobotLocationPractice {
         return angle; // return normalized value
     }
 
+    public void turnRobot(double angleChange) {
+        angle += angleChange;
+    }
+
     public void setAngle(double angle) {
         this.angle = angle;
     }
