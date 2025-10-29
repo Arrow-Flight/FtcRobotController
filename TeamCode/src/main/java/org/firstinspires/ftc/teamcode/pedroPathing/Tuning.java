@@ -1212,7 +1212,7 @@ class Drawing {
 
     /**
      * This draws everything that will be used in the Follower's telemetryDebug() method. This takes
-     * a Follower as an input, so an instance of the DashbaordDrawingHandler class is not needed.
+     * a Follower as an input, so an instance of the Dashbaord DrawingHandler class is not needed.
      *
      * @param follower Pedro Follower instance.
      */
@@ -1235,6 +1235,7 @@ class Drawing {
      * @param pose  the Pose to draw the robot at
      * @param style the parameters used to draw the robot with
      */
+
     public static void drawRobot(Pose pose, Style style) {
         if (pose == null || Double.isNaN(pose.getX()) || Double.isNaN(pose.getY()) || Double.isNaN(pose.getHeading())) {
             return;
