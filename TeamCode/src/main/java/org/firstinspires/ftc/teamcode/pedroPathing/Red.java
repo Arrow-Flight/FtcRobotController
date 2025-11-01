@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Autonomous
-public class Blue extends OpMode {
+public class Red extends OpMode {
 
     // Add Actuators
     private DcMotor shooterLeft;
@@ -29,7 +29,7 @@ public class Blue extends OpMode {
 
     // Define positions
     private final Pose startPose = new Pose(34.000, 135.500, Math.toRadians(-90));
-    private final Pose shootpose = new Pose(48, 90.500, Math.toRadians(-45));
+    private final Pose shootpose = new Pose(20, 90.500, Math.toRadians(-135));
     private final Pose endPose = new Pose(34, 80, Math.toRadians(-90));
     private Path Path1;
     private Path Leave;
