@@ -8,10 +8,12 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
+@Disabled
 @Autonomous
 public class Blue extends OpMode {
 
@@ -24,8 +26,8 @@ public class Blue extends OpMode {
     private Timer pathTimer;
 
     // Define positions
-    private final Pose preStart = new Pose(22.8, 128, Math.toRadians(-126));
-    private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(-126));
+    private final Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
+    private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
     private final Pose shootPose = new Pose(48, 96, Math.toRadians(-45));
 
     // Define Paths
@@ -64,6 +66,7 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
+        telemetry.update();
         follower.update();
 
         // Step 1: Run the first move
@@ -89,13 +92,17 @@ public class Blue extends OpMode {
                 double xInches = -10 - (limelightPose.getPosition().y * 39.37);
                 double yInches = 159.7 + (limelightPose.getPosition().x * 39.37);
                 double headingRadians = Math.toRadians(limelightPose.getOrientation().getYaw() - 90);
-
+                telemetry.addData("X", xInches);
+                telemetry.addData("Y", yInches);
+                telemetry.addData("Heading", headingRadians);
+/*
                 Pose startPose = new Pose(xInches, yInches, headingRadians);
                 moveToShoot = new Path(new BezierLine(startPose, shootPose));
                 moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
 
                 follower.followPath(moveToShoot);
                 limelight.stop();
+ */
                 pathState = 2;
             }
 
