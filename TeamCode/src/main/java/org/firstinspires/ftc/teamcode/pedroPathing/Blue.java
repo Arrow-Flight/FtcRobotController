@@ -178,7 +178,7 @@ public class Blue extends OpMode {
                 follower.followPath(moveToShoot);
                 limelight.stop();
                 servoCamera.setPosition(1.0);
-
+                pathTimer.resetTimer();
                 pathState = 2;
             }
 
