@@ -13,7 +13,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @Autonomous
@@ -30,6 +29,7 @@ public class Red extends OpMode {
     private DcMotor shooterLeft;
     private DcMotor shooterRight;
     private double shooterTargetPower;
+    private double previousError;
 
     // Follower and Timer
     private Follower follower;
@@ -136,10 +136,12 @@ public class Red extends OpMode {
     @Override
     public void loop() {
         // Shooter PIDF
-        double shooterP = 0.0004;
-        double shooterF = 0.00042;
+        double shooterP = 0.001;
+        double shooterF = 0.00045;
+        double shooterD = 0.0004;
         int shooterTargetVelocity = 1100;
-        shooterTargetPower = ((shooterF * shooterTargetVelocity)+ (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())));
+        double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
+        shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
         telemetry.update();
         follower.update();
@@ -269,6 +271,7 @@ public class Red extends OpMode {
         else if (pathState == 14 && !follower.isBusy()) {
             Shoot(15);
         }
+        previousError = currentError;
     }
 
     private void Shoot(int State) {
