@@ -36,9 +36,9 @@ public class Blue extends OpMode {
     private Timer pathTimer;
 
     // Define positions
-    private final Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
-    private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
-    private final Pose shootPose = new Pose(48, 96, Math.toRadians(-48));
+    private final Pose preStart = new Pose(22.8, 128, Math.toRadians(315));
+    private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(315));
+    private final Pose shootPose = new Pose(48, 96, Math.toRadians(312));
     private final Pose firstSpikeInitial = new Pose(48, 83.5, Math.toRadians(180));
     private final Pose firstSpikeFinal = new Pose(20,83.5, Math.toRadians(180));
     private final Pose secondSpikeInitial = new Pose(48,60, Math.toRadians(180));
@@ -138,12 +138,10 @@ public class Blue extends OpMode {
         // Shooter PIDF
         double shooterP = 0.001;
         double shooterF = 0.00045;
-        double shooterD = 0.0004;
+        double shooterD = 0.005;
         int shooterTargetVelocity = 1100;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
-        telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
-        telemetry.update();
         follower.update();
 
 
@@ -175,15 +173,20 @@ public class Blue extends OpMode {
                 moveToShoot = new Path(new BezierLine(startPose, shootPose));
                 moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
 
-                follower.followPath(moveToShoot);
+                telemetry.addData("48", xInches);
+                telemetry.addData("96", yInches);
+                telemetry.addData("5.4454", headingRadians);
+                telemetry.update();
+
+                //follower.followPath(moveToShoot);
                 limelight.stop();
                 servoCamera.setPosition(1.0);
 
-                pathState = 2;
+                pathState = 100;
             }
 
             // If no valid pose after 2 seconds, fall back
-            else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
+            else if (pathTimer.getElapsedTimeSeconds() >= 2.0) {
                 telemetry.addLine("No Limelight pose — using estimated position");
                 telemetry.update();
 
