@@ -17,6 +17,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @Autonomous
 public class Blue extends OpMode {
+    // Smart Shooter Constants
+    private int shotsFired = 0;
+    private boolean wasAtSpeed = false;
+    private boolean inDip = false;
+    private double lastVelocity = 0;
+    private long lastAtSpeedTime = 0;
 
     // Limelight
     private Limelight3A limelight;
@@ -28,8 +34,11 @@ public class Blue extends OpMode {
     private DcMotor intake;
     private DcMotor shooterLeft;
     private DcMotor shooterRight;
+
+    // Shooter PIDF Constants
     private double shooterTargetPower;
     private double previousError;
+    private final Integer shooterTargetVelocity = 1100;
 
     // Follower and Timer
     private Follower follower;
@@ -139,7 +148,6 @@ public class Blue extends OpMode {
         double shooterP = 0.001;
         double shooterF = 0.00045;
         double shooterD = 0.0004;
-        int shooterTargetVelocity = 1100;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
@@ -200,7 +208,7 @@ public class Blue extends OpMode {
 
         // Step 3: Shoot Ball
         else if (pathState == 2 && !follower.isBusy()) {
-            Shoot(3);
+            Shoot(3, 3);
         }
         // Step 4: Move to Get Balls From First Spike
         else if (pathState == 3 && !follower.isBusy()) {
@@ -225,7 +233,7 @@ public class Blue extends OpMode {
         }
         // Step 6: Shoot Balls
         else if (pathState == 6 && !follower.isBusy()) {
-            Shoot(7);
+            Shoot(7, 3);
         }
         // Step 7: Move to Get Balls From Second Spike
         else if (pathState == 7 && !follower.isBusy()) {
@@ -247,7 +255,7 @@ public class Blue extends OpMode {
         }
         // Step 10: Shoot Balls
         else if (pathState == 10 && !follower.isBusy()) {
-            Shoot(11);
+            Shoot(11, 3);
         }
         // Step 11: Move to Get Balls From Third Spike
         else if (pathState == 11 && !follower.isBusy()) {
@@ -269,24 +277,81 @@ public class Blue extends OpMode {
         }
         // Step 14: Shoot Balls
         else if (pathState == 14 && !follower.isBusy()) {
-            Shoot(15);
+            Shoot(15, 3);
         }
         previousError = currentError;
     }
 
-    private void Shoot(int State) {
+    private void Shoot(int nextState, int requiredShots) {
+
+        // Apply PIDF output you already computed
         shooterRight.setPower(shooterTargetPower);
         shooterLeft.setPower(shooterTargetPower);
 
-        if (pathTimer.getElapsedTimeSeconds() >= 5.0) {
+        // Read current velocity
+        double v = ((DcMotorEx) shooterRight).getVelocity();
+        double velError = Math.abs(v - 1100);
+
+        long now = System.currentTimeMillis();
+
+        // Check if shooter is "at speed"
+        double atSpeedThreshold = 50; // how close to target counts as "at speed"
+        boolean atSpeed = velError < atSpeedThreshold;
+
+        // Track stability at speed
+        if (atSpeed) {
+            if (!wasAtSpeed) {
+                lastAtSpeedTime = now;
+            }
+            wasAtSpeed = true;
+        } else {
+            wasAtSpeed = false;
+        }
+
+        // Only feed the ball once shooter has been stable at speed
+        // how long shooter must be stable before firing
+        long settleTimeMs = 150;
+        if (wasAtSpeed && now - lastAtSpeedTime > settleTimeMs) {
+            intake.setPower(1);
+        } else {
+            intake.setPower(0);
+        }
+
+        // Detect velocity dip
+        double change = lastVelocity - v;
+        // how big the dip must be (tune this!)
+        double dipThreshold = 150;
+        boolean dipDetected = change > dipThreshold;
+
+        if (dipDetected && !inDip) {
+            inDip = true;
+            shotsFired++;
+        }
+
+        // Reset dip state when velocity recovers
+        if (v >= shooterTargetVelocity - atSpeedThreshold) {
+            inDip = false;
+        }
+
+        lastVelocity = v;
+
+        // Check if all balls fired
+        if (shotsFired >= requiredShots) {
+            // Cleanup
             intake.setPower(0);
             shooterRight.setPower(0);
             shooterLeft.setPower(0);
-            pathState = State;
+            shotsFired = 0;
+            inDip = false;
+            wasAtSpeed = false;
 
-        } else if (pathTimer.getElapsedTimeSeconds() >= 2.0) {
-            intake.setPower(1);
+            pathState = nextState;
         }
+
+        telemetry.addData("Shooter vel", v);
+        telemetry.addData("Shots fired", shotsFired);
+        telemetry.update();
     }
+
 
 }
