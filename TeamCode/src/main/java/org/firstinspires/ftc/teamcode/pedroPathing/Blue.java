@@ -53,6 +53,7 @@ public class Blue extends OpMode {
     private final Pose secondSpikeFinal = new Pose(15,60, Math.toRadians(180));
     private final Pose thirdSpikeInitial = new Pose(48,35.5, Math.toRadians(180));
     private final Pose thirdSpikeFinal = new Pose(15,35.5, Math.toRadians(180));
+    private final Pose endPose = new Pose(38, 60, Math.toRadians(90));
 
     // Define Paths
     private Path preMove;
@@ -65,6 +66,7 @@ public class Blue extends OpMode {
     private Path shootToThirdSpike;
     private Path thirdSpike;
     private Path shootFromThirdSpike;
+    private Path goToEnd;
 
     int pathState = 0;
 
@@ -127,6 +129,9 @@ public class Blue extends OpMode {
         shootFromThirdSpike = new Path(new BezierLine(thirdSpikeFinal, shootPose));
         shootFromThirdSpike.setLinearHeadingInterpolation(thirdSpikeFinal.getHeading(), shootPose.getHeading());
 
+        goToEnd = new Path(new BezierLine(shootPose, endPose));
+        goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
+
         // Add Timer
         pathTimer = new Timer();
 
@@ -150,8 +155,6 @@ public class Blue extends OpMode {
         int shooterTargetVelocity = 1200;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
-        telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
-        telemetry.update();
         follower.update();
 
 
@@ -208,6 +211,7 @@ public class Blue extends OpMode {
 
         // Step 3: Shoot Ball
         else if (pathState == 2 && !follower.isBusy()) {
+            resetShooterLogic();
             Shoot(3, 3);
         }
         // Step 4: Move to Get Balls From First Spike
@@ -233,6 +237,7 @@ public class Blue extends OpMode {
         }
         // Step 6: Shoot Balls
         else if (pathState == 6 && !follower.isBusy()) {
+            resetShooterLogic();
             Shoot(7, 3);
         }
         // Step 7: Move to Get Balls From Second Spike
@@ -255,6 +260,7 @@ public class Blue extends OpMode {
         }
         // Step 10: Shoot Balls
         else if (pathState == 10 && !follower.isBusy()) {
+            resetShooterLogic();
             Shoot(11, 3);
         }
         // Step 11: Move to Get Balls From Third Spike
@@ -277,7 +283,13 @@ public class Blue extends OpMode {
         }
         // Step 14: Shoot Balls
         else if (pathState == 14 && !follower.isBusy()) {
+            resetShooterLogic();
             Shoot(15, 3);
+        }
+        // Step 15: Go to End Pose
+        else if (pathState == 15 && !follower.isBusy()) {
+            follower.followPath(goToEnd);
+            pathState = 15;
         }
         previousError = currentError;
     }
@@ -351,8 +363,21 @@ public class Blue extends OpMode {
 
         telemetry.addData("Shooter vel", v);
         telemetry.addData("Shots fired", shotsFired);
+        telemetry.addData("v", v);
+        telemetry.addData("lastVelocity", lastVelocity);
+        telemetry.addData("change", change);
+        telemetry.addData("dipDetected", dipDetected);
         telemetry.update();
     }
+
+    private void resetShooterLogic() {
+        shotsFired = 0;
+        wasAtSpeed = false;
+        inDip = false;
+        lastVelocity = 0;
+        lastAtSpeedTime = 0;
+    }
+
 
 
 }
