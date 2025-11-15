@@ -38,7 +38,6 @@ public class Blue extends OpMode {
     // Shooter PIDF Constants
     private double shooterTargetPower;
     private double previousError;
-    private final Integer shooterTargetVelocity = 1100;
 
     // Follower and Timer
     private Follower follower;
@@ -49,11 +48,11 @@ public class Blue extends OpMode {
     private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
     private final Pose shootPose = new Pose(48, 96, Math.toRadians(-48));
     private final Pose firstSpikeInitial = new Pose(48, 83.5, Math.toRadians(180));
-    private final Pose firstSpikeFinal = new Pose(20,83.5, Math.toRadians(180));
+    private final Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(180));
     private final Pose secondSpikeInitial = new Pose(48,60, Math.toRadians(180));
-    private final Pose secondSpikeFinal = new Pose(20,60, Math.toRadians(180));
+    private final Pose secondSpikeFinal = new Pose(15,60, Math.toRadians(180));
     private final Pose thirdSpikeInitial = new Pose(48,35.5, Math.toRadians(180));
-    private final Pose thirdSpikeFinal = new Pose(20,35.5, Math.toRadians(180));
+    private final Pose thirdSpikeFinal = new Pose(15,35.5, Math.toRadians(180));
 
     // Define Paths
     private Path preMove;
@@ -147,7 +146,8 @@ public class Blue extends OpMode {
         // Shooter PIDF
         double shooterP = 0.001;
         double shooterF = 0.00045;
-        double shooterD = 0.0004;
+        double shooterD = 0.005;
+        int shooterTargetVelocity = 1200;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
@@ -290,7 +290,7 @@ public class Blue extends OpMode {
 
         // Read current velocity
         double v = ((DcMotorEx) shooterRight).getVelocity();
-        double velError = Math.abs(v - 1100);
+        double velError = Math.abs(v - 1200);
 
         long now = System.currentTimeMillis();
 
@@ -329,6 +329,7 @@ public class Blue extends OpMode {
         }
 
         // Reset dip state when velocity recovers
+        int shooterTargetVelocity = 1200;
         if (v >= shooterTargetVelocity - atSpeedThreshold) {
             inDip = false;
         }
