@@ -40,11 +40,12 @@ public class Red extends OpMode {
     private final Pose preFinal = new Pose(114.2, 119, Math.toRadians(-135));
     private final Pose shootPose = new Pose(96, 96, Math.toRadians(-132));
     private final Pose firstSpikeInitial = new Pose(96, 83.5, Math.toRadians(0));
-    private final Pose firstSpikeFinal = new Pose(124,83.5, Math.toRadians(0));
+    private final Pose firstSpikeFinal = new Pose(129,83.5, Math.toRadians(0));
     private final Pose secondSpikeInitial = new Pose(96,60, Math.toRadians(0));
-    private final Pose secondSpikeFinal = new Pose(124,60, Math.toRadians(0));
+    private final Pose secondSpikeFinal = new Pose(129,60, Math.toRadians(0));
     private final Pose thirdSpikeInitial = new Pose(96,35.5, Math.toRadians(0));
-    private final Pose thirdSpikeFinal = new Pose(124,35.5, Math.toRadians(0));
+    private final Pose thirdSpikeFinal = new Pose(129,35.5, Math.toRadians(0));
+    private final Pose endPose = new Pose(106,60, Math.toRadians(90));
 
     // Define Paths
     private Path preMove;
@@ -57,6 +58,7 @@ public class Red extends OpMode {
     private Path shootToThirdSpike;
     private Path thirdSpike;
     private Path shootFromThirdSpike;
+    private Path goToEnd;
 
     int pathState = 0;
 
@@ -119,6 +121,9 @@ public class Red extends OpMode {
         shootFromThirdSpike = new Path(new BezierLine(thirdSpikeFinal, shootPose));
         shootFromThirdSpike.setLinearHeadingInterpolation(thirdSpikeFinal.getHeading(), shootPose.getHeading());
 
+        goToEnd = new Path(new BezierLine(shootPose, endPose));
+        goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
+
         // Add Timer
         pathTimer = new Timer();
 
@@ -138,8 +143,8 @@ public class Red extends OpMode {
         // Shooter PIDF
         double shooterP = 0.001;
         double shooterF = 0.00045;
-        double shooterD = 0.0004;
-        int shooterTargetVelocity = 1100;
+        double shooterD = 0.005;
+        int shooterTargetVelocity = 1200;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
@@ -270,6 +275,11 @@ public class Red extends OpMode {
         // Step 14: Shoot Balls
         else if (pathState == 14 && !follower.isBusy()) {
             Shoot(15);
+        }
+        // Step 15: Go To End
+        else if (pathState == 15 && !follower.isBusy()) {
+            follower.followPath(goToEnd);
+            pathState = 16;
         }
         previousError = currentError;
     }
