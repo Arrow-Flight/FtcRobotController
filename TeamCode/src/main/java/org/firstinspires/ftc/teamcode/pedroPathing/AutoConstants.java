@@ -5,8 +5,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
@@ -20,8 +19,8 @@ public class AutoConstants {
 
     // ===Motors===
     public static DcMotor intake;
-    public static DcMotor shooterLeft;
-    public static DcMotor shooterRight;
+    public static DcMotorEx shooterLeft;
+    public static DcMotorEx shooterRight;
 
     // ===Shooter PIDF===
     public static double shooterTargetPower;
@@ -78,17 +77,25 @@ public class AutoConstants {
     }
 
     public static void Shoot(int State) {
-        shooterRight.setPower(shooterTargetPower);
-        shooterLeft.setPower(shooterTargetPower);
+        // clamp power to [-1, 1] (or [0,1] if you only spin forward)
+        double powerToSet = shooterTargetPower;
+        if (Double.isNaN(powerToSet) || Double.isInfinite(powerToSet)) {
+            powerToSet = 0.0;
+        }
+        if (powerToSet > 1.0) powerToSet = 1.0;
+        if (powerToSet < -1.0) powerToSet = -1.0;
 
-        if (pathTimer.getElapsedTimeSeconds() >= 5.0) {
-            intake.setPower(0);
-            shooterRight.setPower(0);
-            shooterLeft.setPower(0);
+        if (shooterRight != null) shooterRight.setPower(powerToSet);
+        if (shooterLeft != null) shooterLeft.setPower(powerToSet);
+
+        // timing windows (caller must reset pathTimer when starting shoot)
+        if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 5.0) {
+            if (intake != null) intake.setPower(0);
+            if (shooterRight != null) shooterRight.setPower(0);
+            if (shooterLeft != null) shooterLeft.setPower(0);
             pathState = State;
-
-        } else if (pathTimer.getElapsedTimeSeconds() >= 2.0) {
-            intake.setPower(1);
+        } else if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 2.0) {
+            if (intake != null) intake.setPower(1);
         }
     }
 }

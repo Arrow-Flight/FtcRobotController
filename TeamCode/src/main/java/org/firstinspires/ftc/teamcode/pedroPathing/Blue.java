@@ -1,55 +1,14 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.endPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.firstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.goToEnd;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preStart;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.secondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromFirstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromSecondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromThirdSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToFirstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToSecondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToThirdSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterD;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterF;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterP;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetVelocity;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.thirdSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.preMove;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Shoot;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelight;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelightPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathState;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.servoCamera;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.intake;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterLeft;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterRight;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetPower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.previousError;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.follower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathTimer;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.hardware.limelightvision.*;
+import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.hardware.*;
 
 @Autonomous
 public class Blue extends OpMode {
@@ -67,8 +26,8 @@ public class Blue extends OpMode {
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Set Up shooter motors
-        shooterLeft = hardwareMap.get(DcMotor.class, "shooterLeft");
-        shooterRight = hardwareMap.get(DcMotor.class, "shooterRight");
+        shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
+        shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -133,8 +92,8 @@ public class Blue extends OpMode {
     @Override
     public void loop() {
         // Shooter PIDF
-        double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
-        shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
+        double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
+        shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
         telemetry.update();
         follower.update();
