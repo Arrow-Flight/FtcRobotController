@@ -10,6 +10,8 @@ import com.qualcomm.hardware.limelightvision.*;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 
+import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
+
 @Autonomous
 public class Blue extends OpMode {
 
@@ -94,10 +96,7 @@ public class Blue extends OpMode {
         // Shooter PIDF
         double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
-        telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
-        telemetry.update();
         follower.update();
-
 
         // Step 1: Run the first move
         if (pathState == 0 && !follower.isBusy()) {
@@ -152,7 +151,7 @@ public class Blue extends OpMode {
 
         // Step 3: Shoot Ball
         else if (pathState == 2 && !follower.isBusy()) {
-            Shoot(3);
+            Shoot(3, 3);
         }
         // Step 4: Move to Get Balls From First Spike
         else if (pathState == 3 && !follower.isBusy()) {
@@ -177,7 +176,7 @@ public class Blue extends OpMode {
         }
         // Step 6: Shoot Balls
         else if (pathState == 6 && !follower.isBusy()) {
-            Shoot(7);
+            Shoot(7, 3);
         }
         // Step 7: Move to Get Balls From Second Spike
         else if (pathState == 7 && !follower.isBusy()) {
@@ -199,7 +198,7 @@ public class Blue extends OpMode {
         }
         // Step 10: Shoot Balls
         else if (pathState == 10 && !follower.isBusy()) {
-            Shoot(11);
+            Shoot(11, 3);
         }
         // Step 11: Move to Get Balls From Third Spike
         else if (pathState == 11 && !follower.isBusy()) {
@@ -221,7 +220,7 @@ public class Blue extends OpMode {
         }
         // Step 14: Shoot Balls
         else if (pathState == 14 && !follower.isBusy()) {
-            Shoot(15);
+            Shoot(15, 3);
         }
         // Step 15: Go To End
         else if (pathState == 15 && !follower.isBusy()) {
