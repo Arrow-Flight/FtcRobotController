@@ -1,6 +1,43 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import com.pedropathing.follower.Follower;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.endPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.firstSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.goToEnd;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preStart;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.secondSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromFirstSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromSecondSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromThirdSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToFirstSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToSecondSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToThirdSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterD;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterF;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterP;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetVelocity;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.thirdSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.preMove;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Shoot;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelight;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelightPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathState;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.servoCamera;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.intake;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterLeft;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterRight;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetPower;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.previousError;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.follower;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathTimer;
+
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -13,54 +50,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 @Autonomous
 public class Blue extends OpMode {
-
-    // Limelight
-    private Limelight3A limelight;
-    private Pose3D limelightPose;
-
-    private Servo servoCamera;
-
-    // Motors
-    private DcMotor intake;
-    private DcMotor shooterLeft;
-    private DcMotor shooterRight;
-    private double shooterTargetPower;
-    private double previousError;
-
-    // Follower and Timer
-    private Follower follower;
-    private Timer pathTimer;
-
-    // Define positions
-    private final Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
-    private final Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
-    private final Pose shootPose = new Pose(48, 96, Math.toRadians(-48));
-    private final Pose firstSpikeInitial = new Pose(48, 83.5, Math.toRadians(180));
-    private final Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(180));
-    private final Pose secondSpikeInitial = new Pose(48,60, Math.toRadians(180));
-    private final Pose secondSpikeFinal = new Pose(15,60, Math.toRadians(180));
-    private final Pose thirdSpikeInitial = new Pose(48,35.5, Math.toRadians(180));
-    private final Pose thirdSpikeFinal = new Pose(15,35.5, Math.toRadians(180));
-    private final Pose endPose = new Pose(38,60, Math.toRadians(90));
-
-    // Define Paths
-    private Path preMove;
-    private Path shootToFirstSpike;
-    private Path firstSpike;
-    private Path shootFromFirstSpike;
-    private Path shootToSecondSpike;
-    private Path secondSpike;
-    private Path shootFromSecondSpike;
-    private Path shootToThirdSpike;
-    private Path thirdSpike;
-    private Path shootFromThirdSpike;
-    private Path goToEnd;
-
-    int pathState = 0;
 
     @Override
     public void init() {
@@ -141,10 +133,6 @@ public class Blue extends OpMode {
     @Override
     public void loop() {
         // Shooter PIDF
-        double shooterP = 0.001;
-        double shooterF = 0.00045;
-        double shooterD = 0.005;
-        int shooterTargetVelocity = 1200;
         double currentError = (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - ((DcMotorEx)shooterRight).getVelocity())) + (shooterD * (currentError - previousError)));
         telemetry.addData("Name", pathTimer.getElapsedTimeSeconds());
@@ -283,20 +271,4 @@ public class Blue extends OpMode {
         }
         previousError = currentError;
     }
-
-    private void Shoot(int State) {
-        shooterRight.setPower(shooterTargetPower);
-        shooterLeft.setPower(shooterTargetPower);
-
-        if (pathTimer.getElapsedTimeSeconds() >= 5.0) {
-            intake.setPower(0);
-            shooterRight.setPower(0);
-            shooterLeft.setPower(0);
-            pathState = State;
-
-        } else if (pathTimer.getElapsedTimeSeconds() >= 2.0) {
-            intake.setPower(1);
-        }
-    }
-
 }
