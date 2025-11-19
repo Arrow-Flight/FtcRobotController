@@ -75,9 +75,28 @@ public class AutoConstants {
         public static final Pose thirdSpikeFinal = new Pose(129,35.5, Math.toRadians(0));
         public static final Pose endPose = new Pose(106,60, Math.toRadians(90));
     }
-    public static void Shoot(int State, int Shots) {
 
+    public static void Shoot(int State, int shots) {
+        // clamp power to [-1, 1] (or [0,1] if you only spin forward)
+        double powerToSet = ShooterPIDF.shooterTargetPower;
+        if (Double.isNaN(powerToSet) || Double.isInfinite(powerToSet)) {
+            powerToSet = 0.0;
+        }
+        if (powerToSet > 1.0) powerToSet = 1.0;
+        if (powerToSet < -1.0) powerToSet = -1.0;
 
+        if (shooterRight != null) shooterRight.setPower(powerToSet);
+        if (shooterLeft != null) shooterLeft.setPower(powerToSet);
+
+        // timing windows (caller must reset pathTimer when starting shoot)
+        if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 5.0) {
+            if (intake != null) intake.setPower(0);
+            if (shooterRight != null) shooterRight.setPower(0);
+            if (shooterLeft != null) shooterLeft.setPower(0);
+            pathState = State;
+        } else if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 2.0) {
+            if (intake != null) intake.setPower(1);
+        }
     }
 
 }
