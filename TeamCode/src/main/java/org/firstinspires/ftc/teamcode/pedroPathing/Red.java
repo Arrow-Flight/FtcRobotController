@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.*;
 
 
 import com.pedropathing.geometry.*;

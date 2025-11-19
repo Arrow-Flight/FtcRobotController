@@ -1,55 +1,16 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.endPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.preStart;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Shoot;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.firstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.follower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.goToEnd;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.intake;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelight;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.limelightPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathState;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pathTimer;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.preMove;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.previousError;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.secondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.servoCamera;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromFirstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromSecondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootFromThirdSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToFirstSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToSecondSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shootToThirdSpike;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterD;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterF;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterLeft;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterP;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterRight;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetPower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.shooterTargetVelocity;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.thirdSpike;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.*;
 
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.hardware.limelightvision.*;
+import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
@@ -138,137 +99,21 @@ public class PoseTuning extends OpMode {
         double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
         follower.update();
+        FtcDashboard.getInstance().getTelemetry().addData("Left", shooterLeft.getVelocity());
+        FtcDashboard.getInstance().getTelemetry().addData("Right", shooterRight.getVelocity());
+        FtcDashboard.getInstance().getTelemetry().update();
 
-
-        // Step 1: Run the first move
-        if (pathState == 0 && !follower.isBusy()) {
-            follower.followPath(preMove);
-            pathTimer.resetTimer(); // track how long the move runs
-            pathState = 1;
-        }
-
-        // Step 2: Wait for Limelight pose (with retry + timeout)
-        else if (pathState == 1) {
-            // Try to get a valid Limelight pose
-            if (limelight.isRunning()) {
-                LLResult result = limelight.getLatestResult();
-                if (result != null && result.isValid()) {
-                    limelightPose = result.getBotpose();
-                }
-            }
-
-            // If we got a valid pose
-            Path moveToShoot;
-            if (limelightPose != null) {
-                double xInches = -10 - (limelightPose.getPosition().y * 39.37);
-                double yInches = 159.7 + (limelightPose.getPosition().x * 39.37);
-                double headingRadians = Math.toRadians(limelightPose.getOrientation().getYaw() - 90);
-
-                Pose startPose = new Pose(xInches, yInches, headingRadians);
-                moveToShoot = new Path(new BezierLine(startPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
-
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                servoCamera.setPosition(1.0);
-
-                pathState = 2;
-            }
-
-            // If no valid pose after 2 seconds, fall back
-            else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
-                telemetry.addLine("No Limelight pose — using estimated position");
-                telemetry.update();
-
-                Pose fallbackPose = follower.getPose(); // use current follower pose
-                moveToShoot = new Path(new BezierLine(fallbackPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(fallbackPose.getHeading(), shootPose.getHeading());
-
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                pathTimer.resetTimer();
-                pathState = 2;
-            }
+        if (gamepad1.right_bumper) {
+            shooterLeft.setPower(shooterTargetPower);
+            shooterRight.setPower(shooterTargetPower);
+        } else if (gamepad1.left_bumper) {
+            shooterLeft.setVelocity(1200);
+            shooterRight.setVelocity(1200);
+        } else {
+            shooterLeft.setPower(0);
+            shooterRight.setPower(0);
         }
 
-        // Step 3: Shoot Ball
-        else if (pathState == 2 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            Shoot(3, 3);
-        }
-        // Step 4: Move to Get Balls From First Spike
-        else if (pathState == 3 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            follower.followPath(shootToFirstSpike);
-            pathState = 4;
-
-        }
-        // Step 5: Intake Balls On First Spike
-        else if (pathState == 4 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(1);
-            follower.followPath(firstSpike);
-            pathState = 5;
-
-        }
-        // Step 5: Return to Shoot Pose
-        else if (pathState == 5 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(0);
-            follower.followPath(shootFromFirstSpike);
-            pathTimer.resetTimer();
-            pathState = 6;
-
-        }
-        // Step 6: Shoot Balls
-        else if (pathState == 6 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            Shoot(7, 3);
-        }
-        // Step 7: Move to Get Balls From Second Spike
-        else if (pathState == 7 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            follower.followPath(shootToSecondSpike);
-            pathState = 8;
-        }
-        // Step 8: Intake Balls on Second Spike
-        else if (pathState == 8 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(1);
-            follower.followPath(secondSpike);
-            pathState = 9;
-        }
-        // Step 9: Return to Shoot Pose
-        else if (pathState == 9 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(0);
-            follower.followPath(shootFromSecondSpike);
-            pathTimer.resetTimer();
-            pathState = 10;
-        }
-        // Step 10: Shoot Balls
-        else if (pathState == 10 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            Shoot(11, 3);
-        }
-        // Step 11: Move to Get Balls From Third Spike
-        else if (pathState == 11 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            follower.followPath(shootToThirdSpike);
-            pathState = 12;
-        }
-        // Step 12: Intake Balls on Third Spike
-        else if (pathState == 12 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(1);
-            follower.followPath(thirdSpike);
-            pathState = 13;
-        }
-        // Step 13: Return to Shoot Pose
-        else if (pathState == 13 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            intake.setPower(0);
-            follower.followPath(shootFromThirdSpike);
-            pathTimer.resetTimer();
-            pathState = 14;
-        }
-        // Step 14: Shoot Balls
-        else if (pathState == 14 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            Shoot(15, 3);
-        }
-        // Step 15: Go To End
-        else if (pathState == 15 && !follower.isBusy() && gamepad1.yWasReleased()) {
-            follower.followPath(goToEnd);
-            pathState = 16;
-        }
         previousError = currentError;
     }
 }
