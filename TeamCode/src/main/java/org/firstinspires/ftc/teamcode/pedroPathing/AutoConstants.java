@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.vel;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
@@ -39,6 +42,8 @@ public class AutoConstants {
     public static Follower follower;
     public static Timer pathTimer;
     public static int pathState;
+    public static int currentState = 0;
+    public static int ballsShot = 0;
 
     @Config
     public static class ShooterPIDF {
@@ -48,6 +53,7 @@ public class AutoConstants {
         public static double shooterF = 0.00045;
         public static double shooterD = 0.005;
         public static int shooterTargetVelocity = 1200;
+        public static double vel;
     }
     public static class Blue {
         // ===Poses===
@@ -77,25 +83,27 @@ public class AutoConstants {
     }
 
     public static void Shoot(int State, int shots) {
-        // clamp power to [-1, 1] (or [0,1] if you only spin forward)
-        double powerToSet = ShooterPIDF.shooterTargetPower;
-        if (Double.isNaN(powerToSet) || Double.isInfinite(powerToSet)) {
-            powerToSet = 0.0;
-        }
-        if (powerToSet > 1.0) powerToSet = 1.0;
-        if (powerToSet < -1.0) powerToSet = -1.0;
-
-        if (shooterRight != null) shooterRight.setPower(powerToSet);
-        if (shooterLeft != null) shooterLeft.setPower(powerToSet);
-
-        // timing windows (caller must reset pathTimer when starting shoot)
-        if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 5.0) {
-            if (intake != null) intake.setPower(0);
-            if (shooterRight != null) shooterRight.setPower(0);
-            if (shooterLeft != null) shooterLeft.setPower(0);
+        shooterLeft.setPower(ShooterPIDF.shooterTargetPower);
+        shooterRight.setPower(ShooterPIDF.shooterTargetPower);
+        vel = (shooterLeft.getVelocity() + shooterRight.getVelocity())/2;
+        if (ballsShot == shots) {
             pathState = State;
-        } else if (pathTimer != null && pathTimer.getElapsedTimeSeconds() >= 2.0) {
-            if (intake != null) intake.setPower(1);
+            intake.setPower(0);
+            shooterRight.setPower(0);
+            shooterLeft.setPower(0);
+            currentState = 0;
+            ballsShot = 0;
+        } else {
+            if (vel >= 1200 && currentState == 0) {
+                currentState = 1;
+            } else if (currentState == 1) {
+                intake.setPower(1);
+                if (vel <= 1100) {
+                    intake.setPower(0);
+                    ballsShot++;
+                    currentState = 0;
+                }
+            }
         }
     }
 

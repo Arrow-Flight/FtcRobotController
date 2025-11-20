@@ -4,7 +4,6 @@ import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.*;
 
-
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
@@ -13,7 +12,6 @@ import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
-
 
 @Autonomous
 public class Red extends OpMode {
@@ -96,11 +94,14 @@ public class Red extends OpMode {
 
     @Override
     public void loop() {
+        telemetry.addData("Balls Shot", ballsShot);
+        telemetry.addData("Current State", currentState);
+        telemetry.addData("Velocity", vel);
+        telemetry.update();
         // Shooter PIDF
         double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
         follower.update();
-
 
         // Step 1: Run the first move
         if (pathState == 0 && !follower.isBusy()) {
