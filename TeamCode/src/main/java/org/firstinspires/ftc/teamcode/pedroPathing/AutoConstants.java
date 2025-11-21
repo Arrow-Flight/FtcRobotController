@@ -60,11 +60,11 @@ public class AutoConstants {
         public static Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
         public static Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
         public static Pose shootPose = new Pose(48, 96, Math.toRadians(-48));
-        public static Pose firstSpikeInitial = new Pose(40, 83, Math.toRadians(177));
+        public static Pose firstSpikeInitial = new Pose(45, 83, Math.toRadians(177));
         public static Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(177));
-        public static Pose secondSpikeInitial = new Pose(40,60, Math.toRadians(177));
+        public static Pose secondSpikeInitial = new Pose(45,60, Math.toRadians(177));
         public static Pose secondSpikeFinal = new Pose(5,60, Math.toRadians(177));
-        public static Pose thirdSpikeInitial = new Pose(40,37, Math.toRadians(177));
+        public static Pose thirdSpikeInitial = new Pose(45,37, Math.toRadians(177));
         public static Pose thirdSpikeFinal = new Pose(5,37, Math.toRadians(177));
         public static Pose endPose = new Pose(38,60, Math.toRadians(90));
     }

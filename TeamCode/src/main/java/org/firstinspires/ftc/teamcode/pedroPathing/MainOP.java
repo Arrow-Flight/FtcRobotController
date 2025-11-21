@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
+
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 import java.util.List;
@@ -12,6 +16,8 @@ public class MainOP extends LinearOpMode {
     double target_power;
     double previous_error;
     boolean slow;
+    private Path toShooter;
+    Pinpoint pinpoint = new Pinpoint(hardwareMap);
 
 
     @Override
@@ -111,13 +117,8 @@ public class MainOP extends LinearOpMode {
                     previous_error = 0;
                 }
                 intake.setPower(gamepad1.right_trigger - gamepad1.left_trigger);
-                if (slow) {
-                    power_divisor = 6;
-                } else {
-                    power_divisor = 1;
-                }
                 if (gamepad1.xWasReleased()) {
-                    slow = !slow;
+                    toShooter = new Path(new BezierLine(pinpoint.getPose(), shootPose));
                 }
             }
         }
