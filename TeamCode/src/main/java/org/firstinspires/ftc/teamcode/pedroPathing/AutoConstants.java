@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.shooterTargetPower;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.vel;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -63,23 +63,23 @@ public class AutoConstants {
         public static Pose firstSpikeInitial = new Pose(40, 83, Math.toRadians(177));
         public static Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(177));
         public static Pose secondSpikeInitial = new Pose(40,60, Math.toRadians(177));
-        public static Pose secondSpikeFinal = new Pose(15,60, Math.toRadians(177));
-        public static Pose thirdSpikeInitial = new Pose(40,35.5, Math.toRadians(177));
-        public static Pose thirdSpikeFinal = new Pose(15,35.5, Math.toRadians(177));
+        public static Pose secondSpikeFinal = new Pose(5,60, Math.toRadians(177));
+        public static Pose thirdSpikeInitial = new Pose(40,37, Math.toRadians(177));
+        public static Pose thirdSpikeFinal = new Pose(5,37, Math.toRadians(177));
         public static Pose endPose = new Pose(38,60, Math.toRadians(90));
     }
     public static class Red {
         // ===Poses===
-        public static final Pose preStart = new Pose(121.2, 128, Math.toRadians(-135));
-        public static final Pose preFinal = new Pose(114.2, 119, Math.toRadians(-135));
-        public static final Pose shootPose = new Pose(96, 96, Math.toRadians(-132));
-        public static final Pose firstSpikeInitial = new Pose(96, 83.5, Math.toRadians(0));
-        public static final Pose firstSpikeFinal = new Pose(129,83.5, Math.toRadians(0));
-        public static final Pose secondSpikeInitial = new Pose(96,60, Math.toRadians(0));
-        public static final Pose secondSpikeFinal = new Pose(129,60, Math.toRadians(0));
-        public static final Pose thirdSpikeInitial = new Pose(96,35.5, Math.toRadians(0));
-        public static final Pose thirdSpikeFinal = new Pose(129,35.5, Math.toRadians(0));
-        public static final Pose endPose = new Pose(106,60, Math.toRadians(90));
+        public static Pose preStart = new Pose(121.2, 128, Math.toRadians(-135));
+        public static Pose preFinal = new Pose(114.2, 119, Math.toRadians(-135));
+        public static Pose shootPose = new Pose(96, 96, Math.toRadians(-132));
+        public static Pose firstSpikeInitial = new Pose(96, 83.5, Math.toRadians(0));
+        public static Pose firstSpikeFinal = new Pose(129,83.5, Math.toRadians(0));
+        public static Pose secondSpikeInitial = new Pose(96,60, Math.toRadians(0));
+        public static Pose secondSpikeFinal = new Pose(129,60, Math.toRadians(0));
+        public static Pose thirdSpikeInitial = new Pose(96,35.5, Math.toRadians(0));
+        public static Pose thirdSpikeFinal = new Pose(129,35.5, Math.toRadians(0));
+        public static Pose endPose = new Pose(106,60, Math.toRadians(90));
     }
 
     public static void Shoot(int State, int shots) {
@@ -94,14 +94,29 @@ public class AutoConstants {
             currentState = 0;
             ballsShot = 0;
         } else {
-            if (vel >= 1200 && currentState == 0) {
-                currentState = 1;
-            } else if (currentState == 1) {
-                intake.setPower(1);
-                if (vel <= 1100) {
-                    intake.setPower(0);
-                    ballsShot++;
-                    currentState = 0;
+            if (ballsShot == 1) {
+                shooterTargetPower = 1250;
+                if (vel >= 1250 && currentState == 0) {
+                    currentState = 1;
+                } else if (currentState == 1) {
+                    intake.setPower(1);
+                    if (vel <= 1100) {
+                        intake.setPower(0);
+                        ballsShot++;
+                        currentState = 0;
+                    }
+                }
+            } else {
+                shooterTargetPower = 1200;
+                if (vel >= 1200 && currentState == 0) {
+                    currentState = 1;
+                } else if (currentState == 1) {
+                    intake.setPower(1);
+                    if (vel <= 1100) {
+                        intake.setPower(0);
+                        ballsShot++;
+                        currentState = 0;
+                    }
                 }
             }
         }

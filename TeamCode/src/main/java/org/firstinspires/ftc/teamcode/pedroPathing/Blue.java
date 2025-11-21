@@ -94,10 +94,6 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Balls Shot", ballsShot);
-        telemetry.addData("Current State", currentState);
-        telemetry.addData("Velocity", vel);
-        telemetry.update();
         // Shooter PIDF
         double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
         shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
