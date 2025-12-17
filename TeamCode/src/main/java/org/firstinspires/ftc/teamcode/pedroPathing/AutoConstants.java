@@ -1,9 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.shooterTargetPower;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.vel;
-
-import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
@@ -38,23 +34,17 @@ public class AutoConstants {
     public static Path shootFromThirdSpike;
     public static Path goToEnd;
 
-    // ===Misc.===
+    // ===Misc===
     public static Follower follower;
     public static Timer pathTimer;
     public static int pathState;
     public static int currentState = 0;
     public static int ballsShot = 0;
+    public static double shooterP = 42;
+    public static double shooterF = 13.5329;
+    public static int shooterTargetVelocity = 1500;
 
-    @Config
-    public static class ShooterPIDF {
-        public static double shooterTargetPower;
-        public static double previousError;
-        public static double shooterP = 0.001;
-        public static double shooterF = 0.00045;
-        public static double shooterD = 0.005;
-        public static int shooterTargetVelocity = 1200;
-        public static double vel;
-    }
+
     public static class Blue {
         // ===Poses===
         public static Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
@@ -83,43 +73,14 @@ public class AutoConstants {
     }
 
     public static void Shoot(int State, int shots) {
-        shooterLeft.setPower(ShooterPIDF.shooterTargetPower);
-        shooterRight.setPower(ShooterPIDF.shooterTargetPower);
-        vel = (shooterLeft.getVelocity() + shooterRight.getVelocity())/2;
-        if (ballsShot == shots) {
-            pathState = State;
-            intake.setPower(0);
-            shooterRight.setPower(0);
-            shooterLeft.setPower(0);
-            currentState = 0;
-            ballsShot = 0;
-        } else {
-            if (ballsShot == 1) {
-                shooterTargetPower = 1250;
-                if (vel >= 1250 && currentState == 0) {
-                    currentState = 1;
-                } else if (currentState == 1) {
-                    intake.setPower(1);
-                    if (vel <= 1100) {
-                        intake.setPower(0);
-                        ballsShot++;
-                        currentState = 0;
-                    }
-                }
-            } else {
-                shooterTargetPower = 1200;
-                if (vel >= 1200 && currentState == 0) {
-                    currentState = 1;
-                } else if (currentState == 1) {
-                    intake.setPower(1);
-                    if (vel <= 1100) {
-                        intake.setPower(0);
-                        ballsShot++;
-                        currentState = 0;
-                    }
-                }
-            }
-        }
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(shooterP, 0, 0, shooterF);
+        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+
+        shooterLeft.setVelocity(shooterTargetVelocity);
+        shooterRight.setVelocity(shooterTargetVelocity);
+
+        double curVelocity = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
     }
 
 }

@@ -75,7 +75,8 @@ public class PIDFTuning extends OpMode {
         right.setVelocity(curTargetVelocity);
 
         double curVelocity = (right.getVelocity() + left.getVelocity())/2;
-        double error = curTargetVelocity - curVelocity;
+        double error;
+        error = curTargetVelocity - curVelocity;
 
 
         telemetry.addData("Target velocity", curTargetVelocity);

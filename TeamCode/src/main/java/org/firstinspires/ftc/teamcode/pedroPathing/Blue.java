@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.*;
 
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
@@ -21,26 +20,23 @@ public class Blue extends OpMode {
         LIMELIGHT_ALIGN,
         SHOOT_INITIAL,
 
-        MOVE_FIRST_SPIKE,
-        INTAKE_FIRST_SPIKE,
-        RETURN_FIRST_SPIKE,
-        SHOOT_FIRST,
-
-        MOVE_SECOND_SPIKE,
-        INTAKE_SECOND_SPIKE,
-        RETURN_SECOND_SPIKE,
-        SHOOT_SECOND,
-
-        MOVE_THIRD_SPIKE,
-        INTAKE_THIRD_SPIKE,
-        RETURN_THIRD_SPIKE,
-        SHOOT_THIRD,
+        MOVE_TO_SPIKE,
+        INTAKE_SPIKE,
+        RETURN_FROM_SPIKE,
+        SHOOT_SPIKE,
 
         GO_TO_END,
         DONE
     }
 
     private AutoState state = AutoState.PRE_MOVE;
+    private int currentSpike = 0;
+
+    private Path[] moveToSpike;
+    private Path[] intakeSpike;
+    private Path[] returnFromSpike;
+
+    private final int[] shootStateIds = {7, 11, 15};
 
     @Override
     public void init() {
@@ -64,6 +60,10 @@ public class Blue extends OpMode {
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 13.5329);
+        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+
         // Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(7);
@@ -72,6 +72,7 @@ public class Blue extends OpMode {
         follower.setStartingPose(preStart);
 
         buildPaths();
+        buildSpikeArrays();
 
         pathTimer = new Timer();
 
@@ -114,6 +115,26 @@ public class Blue extends OpMode {
         goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading());
     }
 
+    private void buildSpikeArrays() {
+        moveToSpike = new Path[]{
+                shootToFirstSpike,
+                shootToSecondSpike,
+                shootToThirdSpike
+        };
+
+        intakeSpike = new Path[]{
+                firstSpike,
+                secondSpike,
+                thirdSpike
+        };
+
+        returnFromSpike = new Path[]{
+                shootFromFirstSpike,
+                shootFromSecondSpike,
+                shootFromThirdSpike
+        };
+    }
+
     @Override
     public void start() {
         limelight.start();
@@ -122,7 +143,6 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        updateShooterPIDF();
         follower.update();
 
         switch (state) {
@@ -139,55 +159,35 @@ public class Blue extends OpMode {
                 break;
 
             case SHOOT_INITIAL:
-                shootAndAdvance(AutoState.MOVE_FIRST_SPIKE, 3, 3);
+                if (!follower.isBusy()) {
+                    Shoot(3, 3);
+                    state = AutoState.MOVE_TO_SPIKE;
+                }
                 break;
 
-            case MOVE_FIRST_SPIKE:
-                followAndAdvance(shootToFirstSpike, AutoState.INTAKE_FIRST_SPIKE);
+            case MOVE_TO_SPIKE:
+                followAndAdvance(moveToSpike[currentSpike], AutoState.INTAKE_SPIKE);
                 break;
 
-            case INTAKE_FIRST_SPIKE:
-                intakeAndAdvance(firstSpike, AutoState.RETURN_FIRST_SPIKE);
+            case INTAKE_SPIKE:
+                intakeAndAdvance(intakeSpike[currentSpike]);
                 break;
 
-            case RETURN_FIRST_SPIKE:
-                returnAndAdvance(shootFromFirstSpike, AutoState.SHOOT_FIRST);
+            case RETURN_FROM_SPIKE:
+                returnAndAdvance(returnFromSpike[currentSpike]);
                 break;
 
-            case SHOOT_FIRST:
-                shootAndAdvance(AutoState.MOVE_SECOND_SPIKE, 7, 3);
-                break;
+            case SHOOT_SPIKE:
+                if (!follower.isBusy()) {
+                    Shoot(shootStateIds[currentSpike], 3);
+                    currentSpike++;
 
-            case MOVE_SECOND_SPIKE:
-                followAndAdvance(shootToSecondSpike, AutoState.INTAKE_SECOND_SPIKE);
-                break;
-
-            case INTAKE_SECOND_SPIKE:
-                intakeAndAdvance(secondSpike, AutoState.RETURN_SECOND_SPIKE);
-                break;
-
-            case RETURN_SECOND_SPIKE:
-                returnAndAdvance(shootFromSecondSpike, AutoState.SHOOT_SECOND);
-                break;
-
-            case SHOOT_SECOND:
-                shootAndAdvance(AutoState.MOVE_THIRD_SPIKE, 11, 3);
-                break;
-
-            case MOVE_THIRD_SPIKE:
-                followAndAdvance(shootToThirdSpike, AutoState.INTAKE_THIRD_SPIKE);
-                break;
-
-            case INTAKE_THIRD_SPIKE:
-                intakeAndAdvance(thirdSpike, AutoState.RETURN_THIRD_SPIKE);
-                break;
-
-            case RETURN_THIRD_SPIKE:
-                returnAndAdvance(shootFromThirdSpike, AutoState.SHOOT_THIRD);
-                break;
-
-            case SHOOT_THIRD:
-                shootAndAdvance(AutoState.GO_TO_END, 15, 3);
+                    if (currentSpike >= moveToSpike.length) {
+                        state = AutoState.GO_TO_END;
+                    } else {
+                        state = AutoState.MOVE_TO_SPIKE;
+                    }
+                }
                 break;
 
             case GO_TO_END:
@@ -197,14 +197,6 @@ public class Blue extends OpMode {
             case DONE:
                 break;
         }
-    }
-
-    private void updateShooterPIDF() {
-        double currentError = shooterTargetVelocity - shooterRight.getVelocity();
-        shooterTargetPower = (shooterF * shooterTargetVelocity)
-                + (shooterP * currentError)
-                + (shooterD * (currentError - previousError));
-        previousError = currentError;
     }
 
     private void handleLimelightAlign() {
@@ -248,27 +240,20 @@ public class Blue extends OpMode {
         }
     }
 
-    private void intakeAndAdvance(Path path, AutoState next) {
+    private void intakeAndAdvance(Path path) {
         if (!follower.isBusy()) {
             intake.setPower(1);
             follower.followPath(path);
-            state = next;
+            state = AutoState.RETURN_FROM_SPIKE;
         }
     }
 
-    private void returnAndAdvance(Path path, AutoState next) {
+    private void returnAndAdvance(Path path) {
         if (!follower.isBusy()) {
             intake.setPower(0);
             follower.followPath(path);
             pathTimer.resetTimer();
-            state = next;
-        }
-    }
-
-    private void shootAndAdvance(AutoState next, int stateId, int count) {
-        if (!follower.isBusy()) {
-            Shoot(stateId, count);
-            state = next;
+            state = AutoState.SHOOT_SPIKE;
         }
     }
 }
