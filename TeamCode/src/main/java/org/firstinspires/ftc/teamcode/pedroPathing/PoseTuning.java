@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
+@Disabled
 @Autonomous
 public class PoseTuning extends OpMode {
 

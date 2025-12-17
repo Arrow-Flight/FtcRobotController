@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.*;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 
+@Disabled
 @TeleOp(name = "MainOp")
 public class MainOP extends LinearOpMode {
 
@@ -17,7 +18,7 @@ public class MainOP extends LinearOpMode {
     double previous_error;
     boolean slow;
     private Path toShooter;
-    Pinpoint pinpoint = new Pinpoint(hardwareMap);
+    //Pinpoint pinpoint = new Pinpoint(hardwareMap);
 
 
     @Override
@@ -118,7 +119,7 @@ public class MainOP extends LinearOpMode {
                 }
                 intake.setPower(gamepad1.right_trigger - gamepad1.left_trigger);
                 if (gamepad1.xWasReleased()) {
-                    toShooter = new Path(new BezierLine(pinpoint.getPose(), shootPose));
+                  //  toShooter = new Path(new BezierLine(pinpoint.getPose(), shootPose));
                 }
             }
         }

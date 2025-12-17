@@ -16,74 +16,102 @@ import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 @Autonomous
 public class Blue extends OpMode {
 
+    private enum AutoState {
+        PRE_MOVE,
+        LIMELIGHT_ALIGN,
+        SHOOT_INITIAL,
+
+        MOVE_FIRST_SPIKE,
+        INTAKE_FIRST_SPIKE,
+        RETURN_FIRST_SPIKE,
+        SHOOT_FIRST,
+
+        MOVE_SECOND_SPIKE,
+        INTAKE_SECOND_SPIKE,
+        RETURN_SECOND_SPIKE,
+        SHOOT_SECOND,
+
+        MOVE_THIRD_SPIKE,
+        INTAKE_THIRD_SPIKE,
+        RETURN_THIRD_SPIKE,
+        SHOOT_THIRD,
+
+        GO_TO_END,
+        DONE
+    }
+
+    private AutoState state = AutoState.PRE_MOVE;
+
     @Override
     public void init() {
-        // Set Up servoCamera
+        // Camera
         servoCamera = hardwareMap.get(Servo.class, "servoCamera");
         servoCamera.scaleRange(0.3, 1.0);
         servoCamera.setPosition(0.3);
 
-        //Set Up intake
+        // Intake
         intake = hardwareMap.get(DcMotor.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Set Up shooter motors
+        // Shooter
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Set Up Limelight
+        // Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(7); // use your AprilTag pipeline
+        limelight.pipelineSwitch(7);
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(preStart);
 
-        // Build Paths
+        buildPaths();
+
+        pathTimer = new Timer();
+
+        telemetry.addLine("Initialized and ready");
+        telemetry.update();
+    }
+
+    private void buildPaths() {
         preMove = new Path(new BezierLine(preStart, preFinal));
         preMove.setLinearHeadingInterpolation(preStart.getHeading(), preFinal.getHeading());
 
         shootToFirstSpike = new Path(new BezierLine(shootPose, firstSpikeInitial));
-        shootToFirstSpike.setLinearHeadingInterpolation(shootPose.getHeading(),firstSpikeInitial.getHeading());
+        shootToFirstSpike.setLinearHeadingInterpolation(shootPose.getHeading(), firstSpikeInitial.getHeading());
 
         firstSpike = new Path(new BezierLine(firstSpikeInitial, firstSpikeFinal));
-        firstSpike.setLinearHeadingInterpolation(firstSpikeInitial.getHeading(),firstSpikeFinal.getHeading());
+        firstSpike.setLinearHeadingInterpolation(firstSpikeInitial.getHeading(), firstSpikeFinal.getHeading());
 
         shootFromFirstSpike = new Path(new BezierLine(firstSpikeInitial, shootPose));
-        shootFromFirstSpike.setLinearHeadingInterpolation(firstSpikeFinal.getHeading(),shootPose.getHeading());
+        shootFromFirstSpike.setLinearHeadingInterpolation(firstSpikeFinal.getHeading(), shootPose.getHeading());
 
-        shootToSecondSpike = new Path(new BezierLine(shootPose,secondSpikeInitial));
-        shootToSecondSpike.setLinearHeadingInterpolation(shootPose.getHeading(),secondSpikeInitial.getHeading());
+        shootToSecondSpike = new Path(new BezierLine(shootPose, secondSpikeInitial));
+        shootToSecondSpike.setLinearHeadingInterpolation(shootPose.getHeading(), secondSpikeInitial.getHeading());
 
-        secondSpike = new Path(new BezierLine(secondSpikeInitial,secondSpikeFinal));
-        secondSpike.setLinearHeadingInterpolation(secondSpikeInitial.getHeading(),secondSpikeFinal.getHeading());
+        secondSpike = new Path(new BezierLine(secondSpikeInitial, secondSpikeFinal));
+        secondSpike.setLinearHeadingInterpolation(secondSpikeInitial.getHeading(), secondSpikeFinal.getHeading());
 
         shootFromSecondSpike = new Path(new BezierLine(secondSpikeFinal, shootPose));
         shootFromSecondSpike.setLinearHeadingInterpolation(secondSpikeFinal.getHeading(), shootPose.getHeading());
 
-        shootToThirdSpike = new Path(new BezierLine(shootPose,thirdSpikeInitial));
-        shootToThirdSpike.setLinearHeadingInterpolation(shootPose.getHeading(),thirdSpikeInitial.getHeading());
+        shootToThirdSpike = new Path(new BezierLine(shootPose, thirdSpikeInitial));
+        shootToThirdSpike.setLinearHeadingInterpolation(shootPose.getHeading(), thirdSpikeInitial.getHeading());
 
-        thirdSpike = new Path(new BezierLine(thirdSpikeInitial,thirdSpikeFinal));
-        thirdSpike.setLinearHeadingInterpolation(thirdSpikeInitial.getHeading(),thirdSpikeFinal.getHeading());
+        thirdSpike = new Path(new BezierLine(thirdSpikeInitial, thirdSpikeFinal));
+        thirdSpike.setLinearHeadingInterpolation(thirdSpikeInitial.getHeading(), thirdSpikeFinal.getHeading());
 
         shootFromThirdSpike = new Path(new BezierLine(thirdSpikeFinal, shootPose));
         shootFromThirdSpike.setLinearHeadingInterpolation(thirdSpikeFinal.getHeading(), shootPose.getHeading());
 
         goToEnd = new Path(new BezierLine(shootPose, endPose));
-        goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
-
-        // Add Timer
-        pathTimer = new Timer();
-
-        // Initial Telemetry
-        telemetry.addLine("Initialized and ready");
-        telemetry.update();
+        goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading());
     }
 
     @Override
@@ -94,140 +122,153 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        // Shooter PIDF
-        double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
-        shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
+        updateShooterPIDF();
         follower.update();
 
-        // Step 1: Run the first move
-        if (pathState == 0 && !follower.isBusy()) {
-            follower.followPath(preMove);
-            pathTimer.resetTimer(); // track how long the move runs
-            pathState = 1;
-        }
-
-        // Step 2: Wait for Limelight pose (with retry + timeout)
-        else if (pathState == 1) {
-            // Try to get a valid Limelight pose
-            if (limelight.isRunning()) {
-                LLResult result = limelight.getLatestResult();
-                if (result != null && result.isValid()) {
-                    limelightPose = result.getBotpose();
+        switch (state) {
+            case PRE_MOVE:
+                if (!follower.isBusy()) {
+                    follower.followPath(preMove);
+                    pathTimer.resetTimer();
+                    state = AutoState.LIMELIGHT_ALIGN;
                 }
-            }
+                break;
 
-            // If we got a valid pose
-            Path moveToShoot;
-            if (limelightPose != null) {
-                double xInches = -10 - (limelightPose.getPosition().y * 39.37);
-                double yInches = 159.7 + (limelightPose.getPosition().x * 39.37);
-                double headingRadians = Math.toRadians(limelightPose.getOrientation().getYaw() - 90);
+            case LIMELIGHT_ALIGN:
+                handleLimelightAlign();
+                break;
 
-                Pose startPose = new Pose(xInches, yInches, headingRadians);
-                moveToShoot = new Path(new BezierLine(startPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
+            case SHOOT_INITIAL:
+                shootAndAdvance(AutoState.MOVE_FIRST_SPIKE, 3, 3);
+                break;
 
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                servoCamera.setPosition(1.0);
+            case MOVE_FIRST_SPIKE:
+                followAndAdvance(shootToFirstSpike, AutoState.INTAKE_FIRST_SPIKE);
+                break;
 
-                pathState = 2;
-            }
+            case INTAKE_FIRST_SPIKE:
+                intakeAndAdvance(firstSpike, AutoState.RETURN_FIRST_SPIKE);
+                break;
 
-            // If no valid pose after 2 seconds, fall back
-            else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
-                telemetry.addLine("No Limelight pose — using estimated position");
-                telemetry.update();
+            case RETURN_FIRST_SPIKE:
+                returnAndAdvance(shootFromFirstSpike, AutoState.SHOOT_FIRST);
+                break;
 
-                Pose fallbackPose = follower.getPose(); // use current follower pose
-                moveToShoot = new Path(new BezierLine(fallbackPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(fallbackPose.getHeading(), shootPose.getHeading());
+            case SHOOT_FIRST:
+                shootAndAdvance(AutoState.MOVE_SECOND_SPIKE, 7, 3);
+                break;
 
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                pathTimer.resetTimer();
-                pathState = 2;
-            }
-        }
+            case MOVE_SECOND_SPIKE:
+                followAndAdvance(shootToSecondSpike, AutoState.INTAKE_SECOND_SPIKE);
+                break;
 
-        // Step 3: Shoot Ball
-        else if (pathState == 2 && !follower.isBusy()) {
-            Shoot(3, 3);
-        }
-        // Step 4: Move to Get Balls From First Spike
-        else if (pathState == 3 && !follower.isBusy()) {
-            follower.followPath(shootToFirstSpike);
-            pathState = 4;
+            case INTAKE_SECOND_SPIKE:
+                intakeAndAdvance(secondSpike, AutoState.RETURN_SECOND_SPIKE);
+                break;
 
-        }
-        // Step 5: Intake Balls On First Spike
-        else if (pathState == 4 && !follower.isBusy()) {
-            intake.setPower(1);
-            follower.followPath(firstSpike);
-            pathState = 5;
+            case RETURN_SECOND_SPIKE:
+                returnAndAdvance(shootFromSecondSpike, AutoState.SHOOT_SECOND);
+                break;
 
-        }
-        // Step 5: Return to Shoot Pose
-        else if (pathState == 5 && !follower.isBusy()) {
-            intake.setPower(0);
-            follower.followPath(shootFromFirstSpike);
-            pathTimer.resetTimer();
-            pathState = 6;
+            case SHOOT_SECOND:
+                shootAndAdvance(AutoState.MOVE_THIRD_SPIKE, 11, 3);
+                break;
 
+            case MOVE_THIRD_SPIKE:
+                followAndAdvance(shootToThirdSpike, AutoState.INTAKE_THIRD_SPIKE);
+                break;
+
+            case INTAKE_THIRD_SPIKE:
+                intakeAndAdvance(thirdSpike, AutoState.RETURN_THIRD_SPIKE);
+                break;
+
+            case RETURN_THIRD_SPIKE:
+                returnAndAdvance(shootFromThirdSpike, AutoState.SHOOT_THIRD);
+                break;
+
+            case SHOOT_THIRD:
+                shootAndAdvance(AutoState.GO_TO_END, 15, 3);
+                break;
+
+            case GO_TO_END:
+                followAndAdvance(goToEnd, AutoState.DONE);
+                break;
+
+            case DONE:
+                break;
         }
-        // Step 6: Shoot Balls
-        else if (pathState == 6 && !follower.isBusy()) {
-            Shoot(7, 3);
-        }
-        // Step 7: Move to Get Balls From Second Spike
-        else if (pathState == 7 && !follower.isBusy()) {
-            follower.followPath(shootToSecondSpike);
-            pathState = 8;
-        }
-        // Step 8: Intake Balls on Second Spike
-        else if (pathState == 8 && !follower.isBusy()) {
-            intake.setPower(1);
-            follower.followPath(secondSpike);
-            pathState = 9;
-        }
-        // Step 9: Return to Shoot Pose
-        else if (pathState == 9 && !follower.isBusy()) {
-            intake.setPower(0);
-            follower.followPath(shootFromSecondSpike);
-            pathTimer.resetTimer();
-            pathState = 10;
-        }
-        // Step 10: Shoot Balls
-        else if (pathState == 10 && !follower.isBusy()) {
-            Shoot(11, 3);
-        }
-        // Step 11: Move to Get Balls From Third Spike
-        else if (pathState == 11 && !follower.isBusy()) {
-            follower.followPath(shootToThirdSpike);
-            pathState = 12;
-        }
-        // Step 12: Intake Balls on Third Spike
-        else if (pathState == 12 && !follower.isBusy()) {
-            intake.setPower(1);
-            follower.followPath(thirdSpike);
-            pathState = 13;
-        }
-        // Step 13: Return to Shoot Pose
-        else if (pathState == 13 && !follower.isBusy()) {
-            intake.setPower(0);
-            follower.followPath(shootFromThirdSpike);
-            pathTimer.resetTimer();
-            pathState = 14;
-        }
-        // Step 14: Shoot Balls
-        else if (pathState == 14 && !follower.isBusy()) {
-            Shoot(15, 3);
-        }
-        // Step 15: Go To End
-        else if (pathState == 15 && !follower.isBusy()) {
-            follower.followPath(goToEnd);
-            pathState = 16;
-        }
+    }
+
+    private void updateShooterPIDF() {
+        double currentError = shooterTargetVelocity - shooterRight.getVelocity();
+        shooterTargetPower = (shooterF * shooterTargetVelocity)
+                + (shooterP * currentError)
+                + (shooterD * (currentError - previousError));
         previousError = currentError;
+    }
+
+    private void handleLimelightAlign() {
+        if (limelight.isRunning()) {
+            LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                limelightPose = result.getBotpose();
+            }
+        }
+
+        if (limelightPose != null) {
+            double x = -10 - (limelightPose.getPosition().y * 39.37);
+            double y = 159.7 + (limelightPose.getPosition().x * 39.37);
+            double heading = Math.toRadians(limelightPose.getOrientation().getYaw() - 90);
+
+            Pose startPose = new Pose(x, y, heading);
+            Path moveToShoot = new Path(new BezierLine(startPose, shootPose));
+            moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
+
+            follower.followPath(moveToShoot);
+            limelight.stop();
+            servoCamera.setPosition(1.0);
+            state = AutoState.SHOOT_INITIAL;
+
+        } else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
+            Pose fallbackPose = follower.getPose();
+            Path moveToShoot = new Path(new BezierLine(fallbackPose, shootPose));
+            moveToShoot.setLinearHeadingInterpolation(fallbackPose.getHeading(), shootPose.getHeading());
+
+            follower.followPath(moveToShoot);
+            limelight.stop();
+            pathTimer.resetTimer();
+            state = AutoState.SHOOT_INITIAL;
+        }
+    }
+
+    private void followAndAdvance(Path path, AutoState next) {
+        if (!follower.isBusy()) {
+            follower.followPath(path);
+            state = next;
+        }
+    }
+
+    private void intakeAndAdvance(Path path, AutoState next) {
+        if (!follower.isBusy()) {
+            intake.setPower(1);
+            follower.followPath(path);
+            state = next;
+        }
+    }
+
+    private void returnAndAdvance(Path path, AutoState next) {
+        if (!follower.isBusy()) {
+            intake.setPower(0);
+            follower.followPath(path);
+            pathTimer.resetTimer();
+            state = next;
+        }
+    }
+
+    private void shootAndAdvance(AutoState next, int stateId, int count) {
+        if (!follower.isBusy()) {
+            Shoot(stateId, count);
+            state = next;
+        }
     }
 }
