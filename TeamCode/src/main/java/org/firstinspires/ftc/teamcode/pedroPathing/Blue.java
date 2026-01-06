@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
@@ -44,25 +45,6 @@ public class Blue extends OpMode {
         servoCamera = hardwareMap.get(Servo.class, "servoCamera");
         servoCamera.scaleRange(0.3, 1.0);
         servoCamera.setPosition(0.3);
-
-        // Intake
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        // Shooter
-        shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
-        shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
-
-        shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 13.5329);
-        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
-        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
         // Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -160,7 +142,7 @@ public class Blue extends OpMode {
 
             case SHOOT_INITIAL:
                 if (!follower.isBusy()) {
-                    Shoot(3, 3);
+                    //Shoot(3, 3);
                     state = AutoState.MOVE_TO_SPIKE;
                 }
                 break;
@@ -179,7 +161,7 @@ public class Blue extends OpMode {
 
             case SHOOT_SPIKE:
                 if (!follower.isBusy()) {
-                    Shoot(shootStateIds[currentSpike], 3);
+                    //Shoot(shootStateIds[currentSpike], 3);
                     currentSpike++;
 
                     if (currentSpike >= moveToSpike.length) {
@@ -257,3 +239,4 @@ public class Blue extends OpMode {
         }
     }
 }
+*/

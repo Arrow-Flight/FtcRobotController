@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
@@ -156,7 +157,7 @@ public class Red extends OpMode {
 
             case SHOOT_INITIAL:
                 if (!follower.isBusy()) {
-                    Shoot(3, 3);
+                    //Shoot(3, 3);
                     state = AutoState.MOVE_TO_SPIKE;
                 }
                 break;
@@ -175,7 +176,7 @@ public class Red extends OpMode {
 
             case SHOOT_SPIKE:
                 if (!follower.isBusy()) {
-                    Shoot(shootStateIds[currentSpike], 3);
+                    //Shoot(shootStateIds[currentSpike], 3);
                     currentSpike++;
 
                     if (currentSpike >= moveToSpike.length) {
@@ -253,3 +254,4 @@ public class Red extends OpMode {
         }
     }
 }
+*/
