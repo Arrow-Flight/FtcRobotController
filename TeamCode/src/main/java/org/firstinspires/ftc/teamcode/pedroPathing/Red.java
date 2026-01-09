@@ -46,7 +46,7 @@ public class Red extends OpMode {
 
         // Set Up Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(7); // use your AprilTag pipeline
+        limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(preStart);

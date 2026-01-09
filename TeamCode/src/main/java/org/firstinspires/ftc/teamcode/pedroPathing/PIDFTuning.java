@@ -13,8 +13,8 @@ public class PIDFTuning extends OpMode {
     public DcMotorEx left;
     public DcMotorEx right;
 
-    double highVelocity = 1500;
-    double lowVelocity = 900;
+    double highVelocity = 1200;
+    double lowVelocity = 750;
 
     double curTargetVelocity = highVelocity;
     double P = 0;

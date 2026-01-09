@@ -30,7 +30,7 @@ public class Blue extends OpMode {
         //Set Up upper
         upper = hardwareMap.get(DcMotor.class, "upper");
         upper.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+        upper.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set Up shooter motors
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
@@ -40,13 +40,13 @@ public class Blue extends OpMode {
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 13.5329);
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 18.5);
         shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
         shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
         // Set Up Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.pipelineSwitch(7); // use your AprilTag pipeline
+        limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(preStart);
@@ -101,8 +101,10 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        follower.update();
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
+        telemetry.addLine(String.valueOf(vel));
+        telemetry.update();
+        follower.update();
 
         // Step 1: Run the first move
         if (pathState == 0 && !follower.isBusy()) {

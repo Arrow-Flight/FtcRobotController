@@ -42,14 +42,14 @@ public class AutoConstants {
     public static int pathState;
     public static int currentState = 0;
     public static int ballsShot = 0;
-    public static int shooterTargetVelocity = 1300;
+    public static int shooterTargetVelocity = 1200;
     public static double vel;
 
     public static class Blue {
         // ===Poses===
         public static Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
         public static Pose preFinal = new Pose(29.8, 119, Math.toRadians(-45));
-        public static Pose shootPose = new Pose(48, 96, Math.toRadians(-48));
+        public static Pose shootPose = new Pose(54, 102, Math.toRadians(-50));
         public static Pose firstSpikeInitial = new Pose(40, 83, Math.toRadians(177));
         public static Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(177));
         public static Pose secondSpikeInitial = new Pose(40,60, Math.toRadians(177));
@@ -57,6 +57,8 @@ public class AutoConstants {
         public static Pose thirdSpikeInitial = new Pose(40,37, Math.toRadians(177));
         public static Pose thirdSpikeFinal = new Pose(5,37, Math.toRadians(177));
         public static Pose endPose = new Pose(38,60, Math.toRadians(90));
+
+        public static int pipeline = 7;
     }
     public static class Red {
         // ===Poses===
@@ -70,6 +72,8 @@ public class AutoConstants {
         public static Pose thirdSpikeInitial = new Pose(96,35.5, Math.toRadians(0));
         public static Pose thirdSpikeFinal = new Pose(129,35.5, Math.toRadians(0));
         public static Pose endPose = new Pose(106,60, Math.toRadians(90));
+
+        public static int pipeline = 8;
     }
 
     public static void Shoot(int State, int shots) {
