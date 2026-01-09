@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.ShooterPIDF.*;
 
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
@@ -28,6 +27,11 @@ public class Red extends OpMode {
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        //Set Up upper
+        upper = hardwareMap.get(DcMotor.class, "upper");
+        upper.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intake.setDirection(DcMotorSimple.Direction.FORWARD);
+
         // Set Up shooter motors
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
@@ -36,6 +40,9 @@ public class Red extends OpMode {
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 13.5329);
+        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
         // Set Up Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -94,14 +101,8 @@ public class Red extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Balls Shot", ballsShot);
-        telemetry.addData("Current State", currentState);
-        telemetry.addData("Velocity", vel);
-        telemetry.update();
-        // Shooter PIDF
-        double currentError = (shooterTargetVelocity - shooterRight.getVelocity());
-        shooterTargetPower = ((shooterF * shooterTargetVelocity) + (shooterP * (shooterTargetVelocity - shooterRight.getVelocity())) + (shooterD * (currentError - previousError)));
         follower.update();
+        vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
 
         // Step 1: Run the first move
         if (pathState == 0 && !follower.isBusy()) {
@@ -232,6 +233,5 @@ public class Red extends OpMode {
             follower.followPath(goToEnd);
             pathState = 16;
         }
-        previousError = currentError;
     }
 }
