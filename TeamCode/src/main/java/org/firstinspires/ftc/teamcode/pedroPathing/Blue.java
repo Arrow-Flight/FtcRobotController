@@ -26,7 +26,6 @@ public class Blue extends OpMode {
         intake = hardwareMap.get(DcMotor.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
-
         //Set Up upper
         upper = hardwareMap.get(DcMotor.class, "upper");
         upper.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
