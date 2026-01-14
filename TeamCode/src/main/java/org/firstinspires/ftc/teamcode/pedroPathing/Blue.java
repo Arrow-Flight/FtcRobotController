@@ -51,9 +51,6 @@ public class Blue extends OpMode {
         follower.setStartingPose(preStart);
 
         // Build Paths
-        preMove = new Path(new BezierLine(preStart, preFinal));
-        preMove.setLinearHeadingInterpolation(preStart.getHeading(), preFinal.getHeading());
-
         shootToFirstSpike = new Path(new BezierLine(shootPose, firstSpikeInitial));
         shootToFirstSpike.setLinearHeadingInterpolation(shootPose.getHeading(),firstSpikeInitial.getHeading());
 
@@ -100,6 +97,7 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
+        currentPose = follower.getPose();
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
         telemetry.addLine(String.valueOf(vel));
         telemetry.update();
@@ -107,57 +105,16 @@ public class Blue extends OpMode {
 
         // Step 1: Run the first move
         if (pathState == 0 && !follower.isBusy()) {
+            preMove = new Path(new BezierLine(currentPose, shootPose));
+            preMove.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
             follower.followPath(preMove);
             pathTimer.resetTimer(); // track how long the move runs
-            pathState = 1;
+            pathState = 2;
         }
 
-        // Step 2: Wait for Limelight pose (with retry + timeout)
-        else if (pathState == 1) {
-            // Try to get a valid Limelight pose
-            if (limelight.isRunning()) {
-                LLResult result = limelight.getLatestResult();
-                if (result != null && result.isValid()) {
-                    limelightPose = result.getBotpose();
-                }
-            }
-
-            // If we got a valid pose
-            Path moveToShoot;
-            if (limelightPose != null) {
-                double xInches = -10 - (limelightPose.getPosition().y * 39.37);
-                double yInches = 159.7 + (limelightPose.getPosition().x * 39.37);
-                double headingRadians = Math.toRadians(limelightPose.getOrientation().getYaw() - 90);
-
-                Pose startPose = new Pose(xInches, yInches, headingRadians);
-                moveToShoot = new Path(new BezierLine(startPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
-
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                servoCamera.setPosition(1.0);
-
-                pathState = 2;
-            }
-
-            // If no valid pose after 2 seconds, fall back
-            else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
-                telemetry.addLine("No Limelight pose — using estimated position");
-                telemetry.update();
-
-                Pose fallbackPose = follower.getPose(); // use current follower pose
-                moveToShoot = new Path(new BezierLine(fallbackPose, shootPose));
-                moveToShoot.setLinearHeadingInterpolation(fallbackPose.getHeading(), shootPose.getHeading());
-
-                follower.followPath(moveToShoot);
-                limelight.stop();
-                pathTimer.resetTimer();
-                pathState = 2;
-            }
-        }
-
-        // Step 3: Shoot Ball
+        // Step 2: Shoot Ball
         else if (pathState == 2 && !follower.isBusy()) {
+            subState = 1;
             Shoot(3, 3);
         }
         // Step 4: Move to Get Balls From First Spike

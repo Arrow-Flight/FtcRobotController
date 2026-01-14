@@ -1,10 +1,17 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 //import com.acmerobotics.dashboard.config.Config;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
+
 import com.pedropathing.follower.Follower;
+import com.pedropathing.ftc.FTCCoordinates;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.*;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
@@ -44,11 +51,12 @@ public class AutoConstants {
     public static int ballsShot = 0;
     public static int shooterTargetVelocity = 1200;
     public static double vel;
+    public static Pose currentPose;
+    public static int subState;
 
     public static class Blue {
         // ===Poses===
         public static Pose preStart = new Pose(22.8, 128, Math.toRadians(-45));
-        public static Pose preFinal = new Pose(48, 102, Math.toRadians(-45));
         public static Pose shootPose = new Pose(48, 102, Math.toRadians(-50));
         public static Pose firstSpikeInitial = new Pose(40, 83, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(180));
@@ -77,32 +85,67 @@ public class AutoConstants {
     }
 
     public static void Shoot(int State, int shots) {
-        vel = (shooterLeft.getVelocity() + shooterRight.getVelocity())/2;
-        if (ballsShot == shots) {
-            pathState = State;
-            upper.setPower(0);
-            intake.setPower(0);
-            shooterRight.setPower(0);
-            shooterLeft.setPower(0);
-            currentState = 0;
-            ballsShot = 0;
-        } else {
-            shooterLeft.setVelocity(shooterTargetVelocity);
-            shooterRight.setVelocity(shooterTargetVelocity);
-                if (vel >= 1200 && currentState == 0) {
-                    currentState = 1;
-                } else if (currentState == 1) {
-                    upper.setPower(1);
-                    intake.setPower(1);
-                    if (vel <= 1100) {
-                        upper.setPower(0);
-                        intake.setPower(0);
-                        ballsShot++;
-                        currentState = 0;
+        if (subState == 1) {
+            // Try to get a valid Limelight pose
+            if (limelight.isRunning()) {
+                LLResult result = limelight.getLatestResult();
+                if (result != null && result.isValid()) {
+                    limelightPose = result.getBotpose();
+                    limelight.stop();
+                }
+            }
+
+                // If we got a valid pose
+                if (limelightPose != null) {
+                    telemetry.addLine("Limelight Pose Found!");
+                    telemetry.update();
+                    follower.setPose(getRobotPoseFromCamera());
+                    preMove = new Path(new BezierLine(currentPose, shootPose));
+                    preMove.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
+                    follower.followPath(preMove);
+
+                    subState = 2;
+                }
+
+                // If no valid pose after 2 seconds, fall back
+                else if (pathTimer.getElapsedTimeSeconds() > 2.0) {
+                    telemetry.addLine("No Limelight pose — using estimated position");
+                    telemetry.update();
+
+                    subState = 2;
+                }
+            } else if (subState == 2) {
+                vel = (shooterLeft.getVelocity() + shooterRight.getVelocity()) / 2;
+                if (ballsShot == shots) {
+                    pathState = State;
+                    subState = 1;
+                    upper.setPower(0);
+                    intake.setPower(0);
+                    shooterRight.setPower(0);
+                    shooterLeft.setPower(0);
+                    currentState = 0;
+                    ballsShot = 0;
+                } else {
+                    shooterLeft.setVelocity(shooterTargetVelocity);
+                    shooterRight.setVelocity(shooterTargetVelocity);
+                    if (vel >= 1200 && currentState == 0) {
+                        currentState = 1;
+                    } else if (currentState == 1) {
+                        upper.setPower(1);
+                        intake.setPower(1);
+                        if (vel <= 1100) {
+                            upper.setPower(0);
+                            intake.setPower(0);
+                            ballsShot++;
+                            currentState = 0;
+                        }
                     }
                 }
+            }
         }
+    private static Pose getRobotPoseFromCamera() {
+        //Use this to convert standard FTC coordinates to standard Pedro Pathing coordinates
+        return new Pose(0, 0, 0, FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
     }
-
-}
+    }
 
