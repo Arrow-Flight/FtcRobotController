@@ -48,7 +48,8 @@ public class Blue extends OpMode {
         limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(preStart);
+        follower.setStartingPose(startingPose);
+        pathState = 0;
 
         // Build Paths
         shootToFirstSpike = new Path(new BezierLine(shootPose, firstSpikeInitial));
@@ -97,99 +98,90 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        currentPose = follower.getPose();
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
-        telemetry.addLine(String.valueOf(vel));
-        telemetry.update();
         follower.update();
+        telemetry.addData("Step:", pathState);
+        telemetry.update();
 
-        // Step 1: Run the first move
-        if (pathState == 0 && !follower.isBusy()) {
-            preMove = new Path(new BezierLine(currentPose, shootPose));
-            preMove.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
-            follower.followPath(preMove);
-            pathTimer.resetTimer(); // track how long the move runs
-            pathState = 2;
-        }
 
-        // Step 2: Shoot Ball
-        else if (pathState == 2 && !follower.isBusy()) {
+        // Step 1: Shoot Initial Balls
+        if (pathState == 0 && subState == 0 && !follower.isBusy()) {
             subState = 1;
-            Shoot(3, 3);
         }
-        // Step 4: Move to Get Balls From First Spike
-        else if (pathState == 3 && !follower.isBusy()) {
-            follower.followPath(shootToFirstSpike);
-            pathState = 4;
+        if (pathState == 0) {
+            Shoot(1, 3, shootPose);
+        }
 
+        // Step 2: Move to Get Balls From First Spike
+        else if (pathState == 1 && !follower.isBusy()) {
+           follower.followPath(shootToFirstSpike);
+           pathState = 2;
         }
-        // Step 5: Intake Balls On First Spike
-        else if (pathState == 4 && !follower.isBusy()) {
+
+        // Step 3: Intake Balls On First Spike
+        else if (pathState == 2 && !follower.isBusy()) {
             intake.setPower(1);
             follower.followPath(firstSpike);
-            pathState = 5;
-
+            pathState = 3;
         }
-        // Step 5: Return to Shoot Pose
-        else if (pathState == 5 && !follower.isBusy()) {
+
+        // Step 4: Shoot First Spike Ball
+        else if (pathState == 3 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
-            follower.followPath(shootFromFirstSpike);
-            pathTimer.resetTimer();
-            pathState = 6;
+            subState = 1;
+        }
+        if (pathState == 3) {
+            Shoot(4, 3, shootPose);
+        }
 
-        }
-        // Step 6: Shoot Balls
-        else if (pathState == 6 && !follower.isBusy()) {
-            Shoot(7, 3);
-        }
-        // Step 7: Move to Get Balls From Second Spike
-        else if (pathState == 7 && !follower.isBusy()) {
+        // Step 5: Move to Get Balls From Second Spike
+        else if (pathState == 4 && !follower.isBusy()) {
             follower.followPath(shootToSecondSpike);
-            pathState = 8;
+            pathState = 5;
         }
-        // Step 8: Intake Balls on Second Spike
-        else if (pathState == 8 && !follower.isBusy()) {
+
+        // Step 6: Intake Balls On Second Spike
+        else if (pathState == 5 && !follower.isBusy()) {
             intake.setPower(1);
             follower.followPath(secondSpike);
-            pathState = 9;
+            pathState = 6;
         }
-        // Step 9: Return to Shoot Pose
-        else if (pathState == 9 && !follower.isBusy()) {
+
+        // Step 7: Shoot Second Spike Balls
+        else if (pathState == 6 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
-            follower.followPath(shootFromSecondSpike);
-            pathTimer.resetTimer();
-            pathState = 10;
+            subState = 1;
         }
-        // Step 10: Shoot Balls
-        else if (pathState == 10 && !follower.isBusy()) {
-            Shoot(11, 3);
+        if (pathState == 6) {
+            Shoot(7, 3, shootPose);
         }
-        // Step 11: Move to Get Balls From Third Spike
-        else if (pathState == 11 && !follower.isBusy()) {
+
+        // Step 8:  Move to Get Balls From Third Spike
+        else if (pathState == 7 && !follower.isBusy()) {
             follower.followPath(shootToThirdSpike);
-            pathState = 12;
+            pathState = 8;
         }
-        // Step 12: Intake Balls on Third Spike
-        else if (pathState == 12 && !follower.isBusy()) {
+
+        // Step 9: Intake Balls On Third Spike
+        else if (pathState == 8 && !follower.isBusy()) {
             intake.setPower(1);
             follower.followPath(thirdSpike);
-            pathState = 13;
+            pathState = 9;
         }
-        // Step 13: Return to Shoot Pose
-        else if (pathState == 13 && !follower.isBusy()) {
+
+        // Step 10: Shoot Third Spike Balls
+        else if (pathState == 9 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
-            follower.followPath(shootFromThirdSpike);
-            pathTimer.resetTimer();
-            pathState = 14;
+            subState = 1;
         }
-        // Step 14: Shoot Balls
-        else if (pathState == 14 && !follower.isBusy()) {
-            Shoot(15, 3);
+        if (pathState == 9) {
+            Shoot(10, 3, shootPose);
         }
-        // Step 15: Go To End
-        else if (pathState == 15 && !follower.isBusy()) {
+
+        // Step 11: Go To End
+        else if (pathState == 10 && !follower.isBusy()) {
             follower.followPath(goToEnd);
-            pathState = 16;
+            pathState = 11;
         }
     }
 }
