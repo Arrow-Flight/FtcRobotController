@@ -2,14 +2,22 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 
 //import com.acmerobotics.dashboard.config.Config;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.pedropathing.ftc.FTCCoordinates;
+import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.*;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
 public class AutoConstants {
     // ===Limelight===
     public static Limelight3A limelight;
@@ -46,6 +54,7 @@ public class AutoConstants {
     public static double vel;
     public static Pose currentPose;
     public static int subState;
+    static Pose3D botPose;
 
     public static class Blue {
         // ===Poses===
@@ -76,45 +85,95 @@ public class AutoConstants {
         public static int pipeline = 8;
     }
 
-    public static void Shoot(int State, int shots, Pose shootAt) {
-        // Move from Current to Shoot
+    // =======================
+    // SHOOT STATE MACHINE
+    // =======================
+    public static void Shoot(int State, int shots, Pose shootAt, Telemetry telemetry) {
+
+        // Step 1: Move from current pose to shoot pose
         if (subState == 1 && !follower.isBusy()) {
             currentPose = follower.getPose();
+
             toShoot = new Path(new BezierLine(currentPose, shootAt));
             toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
             follower.followPath(toShoot);
             subState = 2;
         }
-        // Shoot Balls
+
+        // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy()) {
+
+            Pose llPose = getPoseFromLimelight();
+            if (llPose != null) {
+                follower.setPose(llPose);
+                telemetry.addLine("Used April Tag!");
+                telemetry.update();
+            }
+
+            subState = 3;
+        }
+
+        // 3) Shoot balls
+        else if (subState == 3 && !follower.isBusy()) {
+
             if (ballsShot == shots) {
                 pathTimer.resetTimer();
                 pathState = State;
+
                 upper.setPower(0);
                 intake.setPower(0);
                 shooterRight.setVelocity(0);
                 shooterLeft.setVelocity(0);
+
                 ballsShot = 0;
                 subState = 0;
-            } else {
-                shooterLeft.setVelocity(shooterTargetVelocity);
-                shooterRight.setVelocity(shooterTargetVelocity);
-                if (vel >= 1200 && currentState == 0) {
-                    currentState = 1;
-                } else if (currentState == 1) {
-                    upper.setPower(1);
-                    intake.setPower(1);
-                    if (vel <= 1100) {
-                        upper.setPower(0);
-                        intake.setPower(0);
-                        ballsShot++;
-                        currentState = 0;
-                    }
-                }
+                return;
             }
 
+            shooterLeft.setVelocity(shooterTargetVelocity);
+            shooterRight.setVelocity(shooterTargetVelocity);
+
+            if (vel >= 1200 && currentState == 0) {
+                currentState = 1;
+            }
+            else if (currentState == 1) {
+                upper.setPower(1);
+                intake.setPower(1);
+
+                if (vel <= 1100) {
+                    upper.setPower(0);
+                    intake.setPower(0);
+                    ballsShot++;
+                    currentState = 0;
                 }
             }
         }
+    }
+    private static Pose getPoseFromLimelight() {
+
+        if (limelight == null) return null;
+
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) return null;
+
+        Pose3D botPose = result.getBotpose();
+        if (botPose == null) return null;
+
+        // FTC field coordinates (meters)
+        double xMeters = botPose.getPosition().x;
+        double yMeters = botPose.getPosition().y;
+        double headingRad = botPose.getOrientation().getYaw();
+
+        // Convert meters → inches
+        double xInches = xMeters * 39.3701;
+        double yInches = yMeters * 39.3701;
+
+        // Convert FTC → Pedro coordinates
+        return new Pose(xInches, yInches, headingRad, FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+    }
+
+
+
+}
 

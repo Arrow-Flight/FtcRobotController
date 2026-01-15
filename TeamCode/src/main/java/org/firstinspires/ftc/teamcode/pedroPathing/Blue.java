@@ -109,7 +109,7 @@ public class Blue extends OpMode {
             subState = 1;
         }
         if (pathState == 0) {
-            Shoot(1, 3, shootPose);
+            Shoot(1, 3, shootPose, telemetry);
         }
 
         // Step 2: Move to Get Balls From First Spike
@@ -131,7 +131,7 @@ public class Blue extends OpMode {
             subState = 1;
         }
         if (pathState == 3) {
-            Shoot(4, 3, shootPose);
+            Shoot(4, 3, shootPose, telemetry);
         }
 
         // Step 5: Move to Get Balls From Second Spike
@@ -153,7 +153,7 @@ public class Blue extends OpMode {
             subState = 1;
         }
         if (pathState == 6) {
-            Shoot(7, 3, shootPose);
+            Shoot(7, 3, shootPose, telemetry);
         }
 
         // Step 8:  Move to Get Balls From Third Spike
@@ -175,7 +175,7 @@ public class Blue extends OpMode {
             subState = 1;
         }
         if (pathState == 9) {
-            Shoot(10, 3, shootPose);
+            Shoot(10, 3, shootPose, telemetry);
         }
 
         // Step 11: Go To End
