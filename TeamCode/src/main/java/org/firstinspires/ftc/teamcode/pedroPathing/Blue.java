@@ -20,7 +20,7 @@ public class Blue extends OpMode {
         // Set Up servoCamera
         servoCamera = hardwareMap.get(Servo.class, "servoCamera");
         servoCamera.scaleRange(0.3, 1.0);
-        servoCamera.setPosition(0.3);
+        servoCamera.setPosition(0.4);
 
         //Set Up intake
         intake = hardwareMap.get(DcMotor.class, "intake");
@@ -100,8 +100,6 @@ public class Blue extends OpMode {
     public void loop() {
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
         follower.update();
-        telemetry.addData("Step:", pathState);
-        telemetry.update();
 
 
         // Step 1: Shoot Initial Balls

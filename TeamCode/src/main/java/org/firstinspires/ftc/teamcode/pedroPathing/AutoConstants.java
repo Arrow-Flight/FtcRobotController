@@ -59,13 +59,13 @@ public class AutoConstants {
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(22.8, 128, Math.toRadians(-45));
-        public static Pose shootPose = new Pose(48, 102, Math.toRadians(-50));
-        public static Pose firstSpikeInitial = new Pose(40, 83, Math.toRadians(180));
-        public static Pose firstSpikeFinal = new Pose(15,83.5, Math.toRadians(180));
-        public static Pose secondSpikeInitial = new Pose(40,60, Math.toRadians(180));
-        public static Pose secondSpikeFinal = new Pose(5,60, Math.toRadians(180));
-        public static Pose thirdSpikeInitial = new Pose(40,37, Math.toRadians(180));
-        public static Pose thirdSpikeFinal = new Pose(5,37, Math.toRadians(180));
+        public static Pose shootPose = new Pose(52, 96, Math.toRadians(-50));
+        public static Pose firstSpikeInitial = new Pose(40, 85, Math.toRadians(180));
+        public static Pose firstSpikeFinal = new Pose(15,85, Math.toRadians(180));
+        public static Pose secondSpikeInitial = new Pose(40,62, Math.toRadians(180));
+        public static Pose secondSpikeFinal = new Pose(5,62, Math.toRadians(180));
+        public static Pose thirdSpikeInitial = new Pose(40,40, Math.toRadians(180));
+        public static Pose thirdSpikeFinal = new Pose(5,40, Math.toRadians(180));
         public static Pose endPose = new Pose(38,60, Math.toRadians(90));
 
         public static int pipeline = 7;
@@ -98,20 +98,37 @@ public class AutoConstants {
             toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
             follower.followPath(toShoot);
+            pathTimer.resetTimer();
             subState = 2;
         }
 
         // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy()) {
-
-            Pose llPose = getPoseFromLimelight();
-            if (llPose != null) {
-                follower.setPose(llPose);
-                telemetry.addLine("Used April Tag!");
+            telemetry.addLine("Reset");
+            telemetry.update();
+            if (pathTimer.getElapsedTimeSeconds() > 2) {
+                telemetry.addLine("Reset");
+                telemetry.addLine("Past 0.5");
                 telemetry.update();
-            }
 
-            subState = 3;
+                Pose llPose = getPoseFromLimelight();
+
+                if (llPose != null) {
+                    telemetry.addData("Result:", llPose);
+
+                    Pose corrected = getCorrectedPose(llPose, shootAt);
+                    toShoot = new Path(new BezierLine(corrected, shootAt));
+                    toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
+
+                    follower.followPath(toShoot);
+
+                } else {
+                    telemetry.addData("Result:", null);
+                }
+                telemetry.update();
+
+                subState = 3;
+            }
         }
 
         // 3) Shoot balls
@@ -168,12 +185,28 @@ public class AutoConstants {
         // Convert meters → inches
         double xInches = xMeters * 39.3701;
         double yInches = yMeters * 39.3701;
+        double headingDeg = Math.toDegrees(headingRad);
+
+        Pose temp = new Pose(xInches, yInches, headingDeg, FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+
+        // Transform Coordinates
+        double transX = temp.getX() + 64.5;
+        double transY = temp.getY() + 71.5;
 
         // Convert FTC → Pedro coordinates
-        return new Pose(xInches, yInches, headingRad, FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+        return new Pose(transX, transY, temp.getHeading());
     }
 
+    private static Pose getCorrectedPose(Pose llPose, Pose shootAt) {
+        double xOff = shootAt.getX() - llPose.getX();
+        double yOff = shootAt.getY() - llPose.getY();
+        double headOff = shootAt.getHeading() - llPose.getHeading();
 
+        double xCorrect = currentPose.getX() + xOff;
+        double yCorrect = currentPose.getY() + yOff;
+        double headCorrect = currentPose.getHeading() + headOff;
 
+        return new Pose(xCorrect, yCorrect, headCorrect);
+    }
 }
 
