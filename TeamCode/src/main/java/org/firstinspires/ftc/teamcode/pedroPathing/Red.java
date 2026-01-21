@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
-@Autonomous
+@Autonomous(preselectTeleOp="MainOpRed")
 public class Red extends OpMode {
 
     @Override

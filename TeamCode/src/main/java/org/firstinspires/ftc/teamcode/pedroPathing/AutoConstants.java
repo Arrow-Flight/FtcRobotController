@@ -64,21 +64,21 @@ public class AutoConstants {
         public static Pose secondSpikeFinal = new Pose(5,62, Math.toRadians(180));
         public static Pose thirdSpikeInitial = new Pose(40,40, Math.toRadians(180));
         public static Pose thirdSpikeFinal = new Pose(5,40, Math.toRadians(180));
-        public static Pose endPose = new Pose(22,75, Math.toRadians(0));
+        public static Pose endPose = new Pose(35,75, Math.toRadians(0));
 
         public static int pipeline = 7;
     }
     public static class Red {
         // ===Poses===
         public static Pose startingPose = new Pose(121.2, 128, Math.toRadians(-135));
-        public static Pose shootPose = new Pose(92, 92, Math.toRadians(-135));
+        public static Pose shootPose = new Pose(92, 92, Math.toRadians(-138));
         public static Pose firstSpikeInitial = new Pose(100, 85, Math.toRadians(5));
         public static Pose firstSpikeFinal = new Pose(129,85, Math.toRadians(5));
         public static Pose secondSpikeInitial = new Pose(100,62, Math.toRadians(5));
         public static Pose secondSpikeFinal = new Pose(139,62, Math.toRadians(5));
         public static Pose thirdSpikeInitial = new Pose(100,40, Math.toRadians(5));
         public static Pose thirdSpikeFinal = new Pose(139,40, Math.toRadians(5));
-        public static Pose endPose = new Pose(122,75, Math.toRadians(180));
+        public static Pose endPose = new Pose(115,75, Math.toRadians(180));
 
         public static int pipeline = 8;
     }
