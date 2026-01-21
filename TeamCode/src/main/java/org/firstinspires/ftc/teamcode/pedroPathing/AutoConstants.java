@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-//import com.acmerobotics.dashboard.config.Config;
-
+import com.acmerobotics.dashboard.config.Config;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -54,7 +53,6 @@ public class AutoConstants {
     public static double vel;
     public static Pose currentPose;
     public static int subState;
-    static Pose3D botPose;
 
     public static class Blue {
         // ===Poses===
@@ -66,21 +64,21 @@ public class AutoConstants {
         public static Pose secondSpikeFinal = new Pose(5,62, Math.toRadians(180));
         public static Pose thirdSpikeInitial = new Pose(40,40, Math.toRadians(180));
         public static Pose thirdSpikeFinal = new Pose(5,40, Math.toRadians(180));
-        public static Pose endPose = new Pose(38,60, Math.toRadians(90));
+        public static Pose endPose = new Pose(22,75, Math.toRadians(0));
 
         public static int pipeline = 7;
     }
     public static class Red {
         // ===Poses===
-        public static Pose preStart = new Pose(121.2, 128, Math.toRadians(-135));
-        public static Pose shootPose = new Pose(96, 96, Math.toRadians(-135));
-        public static Pose firstSpikeInitial = new Pose(104, 83, Math.toRadians(5));
-        public static Pose firstSpikeFinal = new Pose(129,83.5, Math.toRadians(5));
-        public static Pose secondSpikeInitial = new Pose(104,60, Math.toRadians(5));
-        public static Pose secondSpikeFinal = new Pose(139,60, Math.toRadians(5));
-        public static Pose thirdSpikeInitial = new Pose(104,37, Math.toRadians(5));
-        public static Pose thirdSpikeFinal = new Pose(139,37, Math.toRadians(5));
-        public static Pose endPose = new Pose(106,60, Math.toRadians(-90));
+        public static Pose startingPose = new Pose(121.2, 128, Math.toRadians(-135));
+        public static Pose shootPose = new Pose(92, 92, Math.toRadians(-135));
+        public static Pose firstSpikeInitial = new Pose(100, 85, Math.toRadians(5));
+        public static Pose firstSpikeFinal = new Pose(129,85, Math.toRadians(5));
+        public static Pose secondSpikeInitial = new Pose(100,62, Math.toRadians(5));
+        public static Pose secondSpikeFinal = new Pose(139,62, Math.toRadians(5));
+        public static Pose thirdSpikeInitial = new Pose(100,40, Math.toRadians(5));
+        public static Pose thirdSpikeFinal = new Pose(139,40, Math.toRadians(5));
+        public static Pose endPose = new Pose(122,75, Math.toRadians(180));
 
         public static int pipeline = 8;
     }

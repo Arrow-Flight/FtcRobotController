@@ -1,4 +1,3 @@
-/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
@@ -21,7 +20,7 @@ public class Red extends OpMode {
         // Set Up servoCamera
         servoCamera = hardwareMap.get(Servo.class, "servoCamera");
         servoCamera.scaleRange(0.3, 1.0);
-        servoCamera.setPosition(0.3);
+        servoCamera.setPosition(0.4);
 
         //Set Up intake
         intake = hardwareMap.get(DcMotor.class, "intake");
@@ -49,7 +48,8 @@ public class Red extends OpMode {
         limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(preStart);
+        follower.setStartingPose(startingPose);
+        pathState = 0;
 
         // Build Paths
         shootToFirstSpike = new Path(new BezierLine(shootPose, firstSpikeInitial));
@@ -94,21 +94,20 @@ public class Red extends OpMode {
     public void start() {
         limelight.start();
         pathTimer.resetTimer();
-        follower.setStartingPose(new Pose(22.8, 128, Math.toRadians(-45)));
     }
 
     @Override
     public void loop() {
-        currentPose = follower.getPose();
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
-        telemetry.addLine(String.valueOf(vel));
-        telemetry.update();
         follower.update();
 
+
         // Step 1: Shoot Initial Balls
-        if (pathState == 0 && !follower.isBusy()) {
+        if (pathState == 0 && subState == 0 && !follower.isBusy()) {
             subState = 1;
-            Shoot(1, 3, shootPose);
+        }
+        if (pathState == 0) {
+            Shoot(1, 3, shootPose, telemetry);
         }
 
         // Step 2: Move to Get Balls From First Spike
@@ -125,10 +124,12 @@ public class Red extends OpMode {
         }
 
         // Step 4: Shoot First Spike Ball
-        else if (pathState == 3 && !follower.isBusy()) {
+        else if (pathState == 3 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
             subState = 1;
-            Shoot(4, 3, shootPose);
+        }
+        if (pathState == 3) {
+            Shoot(4, 3, shootPose, telemetry);
         }
 
         // Step 5: Move to Get Balls From Second Spike
@@ -141,14 +142,16 @@ public class Red extends OpMode {
         else if (pathState == 5 && !follower.isBusy()) {
             intake.setPower(1);
             follower.followPath(secondSpike);
-            pathState = 5;
+            pathState = 6;
         }
 
         // Step 7: Shoot Second Spike Balls
-        else if (pathState == 6 && !follower.isBusy()) {
+        else if (pathState == 6 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
             subState = 1;
-            Shoot(7, 3, shootPose);
+        }
+        if (pathState == 6) {
+            Shoot(7, 3, shootPose, telemetry);
         }
 
         // Step 8:  Move to Get Balls From Third Spike
@@ -165,10 +168,12 @@ public class Red extends OpMode {
         }
 
         // Step 10: Shoot Third Spike Balls
-        else if (pathState == 9 && !follower.isBusy()) {
+        else if (pathState == 9 && subState == 0 && !follower.isBusy()) {
             intake.setPower(0);
             subState = 1;
-            Shoot(10, 3, shootPose);
+        }
+        if (pathState == 9) {
+            Shoot(10, 3, shootPose, telemetry);
         }
 
         // Step 11: Go To End
@@ -178,4 +183,3 @@ public class Red extends OpMode {
         }
     }
 }
- */
