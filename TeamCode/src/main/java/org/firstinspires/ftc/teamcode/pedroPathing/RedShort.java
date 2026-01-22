@@ -1,15 +1,15 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.endPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.firstSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.pipeline;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.secondSpikeInitial;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.startingPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeFinal;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.thirdSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.endPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.firstSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.firstSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.pipeline;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.secondSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.secondSpikeInitial;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.shootPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.startingPose;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.thirdSpikeFinal;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.thirdSpikeInitial;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Shoot;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.firstSpike;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.follower;
@@ -38,7 +38,6 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -48,9 +47,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
-//@Disabled
-@Autonomous(preselectTeleOp="MainOpBlue")
-public class BlueShort extends OpMode {
+@Autonomous(preselectTeleOp="MainOpRed")
+public class RedShort extends OpMode {
 
     @Override
     public void init() {
@@ -149,8 +147,8 @@ public class BlueShort extends OpMode {
 
         // Step 2: Move to Get Balls From First Spike
         else if (pathState == 1 && !follower.isBusy()) {
-           follower.followPath(shootToFirstSpike);
-           pathState = 2;
+            follower.followPath(shootToFirstSpike);
+            pathState = 2;
         }
 
         // Step 3: Intake Balls On First Spike

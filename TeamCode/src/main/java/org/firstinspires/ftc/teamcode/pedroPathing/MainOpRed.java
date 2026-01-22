@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
 @TeleOp
-public class MainOpBlue extends LinearOpMode {
+public class MainOpRed extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Set Up Camera Servo
@@ -66,8 +66,8 @@ public class MainOpBlue extends LinearOpMode {
         limelight.pipelineSwitch(7);
 
         // Set Up Follower
-        Pose start = new Pose(35, 75, Math.toRadians(0));
-        Pose shootAt = new Pose(52, 96, Math.toRadians(-50));
+        Pose start = new Pose(115,75, Math.toRadians(180));
+        Pose shootAt = new Pose(92, 92, Math.toRadians(-138));
         Pose currentPose;
         Path toShoot;
         Follower follower = Constants.createFollower(hardwareMap);
