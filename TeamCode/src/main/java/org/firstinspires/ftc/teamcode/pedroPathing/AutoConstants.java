@@ -105,9 +105,6 @@ public class AutoConstants {
             telemetry.addLine("Reset");
             telemetry.update();
             if (pathTimer.getElapsedTimeSeconds() > 2) {
-                telemetry.addLine("Reset");
-                telemetry.addLine("Past 0.5");
-                telemetry.update();
 
                 Pose llPose = getPoseFromLimelight();
 
@@ -165,7 +162,7 @@ public class AutoConstants {
             }
         }
     }
-    private static Pose getPoseFromLimelight() {
+    public static Pose getPoseFromLimelight() {
 
         if (limelight == null) return null;
 
@@ -195,7 +192,7 @@ public class AutoConstants {
         return new Pose(transX, transY, temp.getHeading());
     }
 
-    private static Pose getCorrectedPose(Pose llPose, Pose shootAt) {
+    public static Pose getCorrectedPose(Pose llPose, Pose shootAt) {
         double xOff = shootAt.getX() - llPose.getX();
         double yOff = shootAt.getY() - llPose.getY();
         double headOff = shootAt.getHeading() - llPose.getHeading();
