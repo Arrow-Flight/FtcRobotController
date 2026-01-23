@@ -46,6 +46,7 @@ public class AutoConstants {
     // ===Misc.===
     public static Follower follower;
     public static Timer pathTimer;
+    public static Timer timeout;
     public static int pathState;
     public static int currentState = 0;
     public static int ballsShot = 0;

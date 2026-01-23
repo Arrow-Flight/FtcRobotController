@@ -66,7 +66,7 @@ public class MainOpBlue extends LinearOpMode {
         limelight.pipelineSwitch(7);
 
         // Set Up Follower
-        Pose start = new Pose(35, 75, Math.toRadians(0));
+        Pose start = new Pose(35,75, Math.toRadians(0));
         Pose shootAt = new Pose(52, 96, Math.toRadians(-50));
         Pose currentPose;
         Path toShoot;
@@ -90,6 +90,7 @@ public class MainOpBlue extends LinearOpMode {
 
             follower.update();
             telemetry.addData("Pose", follower.getPose());
+            telemetry.addData("xSpin", xSpin);
             telemetry.update();
             vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
             double y = -gamepad1.left_stick_y;
@@ -121,9 +122,8 @@ public class MainOpBlue extends LinearOpMode {
 
             if (!shooting) {
                 if (gamepad1.xWasPressed()) {
-                    if (xSpin)
-                        xSpin = false;
-                } else xSpin = true;
+                    xSpin = !xSpin;
+                }
 
                 if (xSpin) {
                     shooterLeft.setVelocity(shooterTargetVelocity);

@@ -90,6 +90,7 @@ public class MainOpRed extends LinearOpMode {
 
             follower.update();
             telemetry.addData("Pose", follower.getPose());
+            telemetry.addData("xSpin", xSpin);
             telemetry.update();
             vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
             double y = -gamepad1.left_stick_y;
@@ -121,9 +122,8 @@ public class MainOpRed extends LinearOpMode {
 
             if (!shooting) {
                 if (gamepad1.xWasPressed()) {
-                    if (xSpin)
-                        xSpin = false;
-                } else xSpin = true;
+                    xSpin = !xSpin;
+                }
 
                 if (xSpin) {
                     shooterLeft.setVelocity(shooterTargetVelocity);
