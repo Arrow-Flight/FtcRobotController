@@ -182,8 +182,16 @@ public class Blue extends OpMode {
                 pathState = 11;
             }
         } else {
-            follower.followPath(goToEnd);
-            pathState = 11;
+            if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 27) {
+                timeoutTriggered = true;
+
+                follower.breakFollowing();
+                shooterLeft.setVelocity(0);
+                shooterRight.setVelocity(0);
+                intake.setPower(0);
+                upper.setPower(0);
+                follower.followPath(goToEnd);
+            }
         }
     }
 }

@@ -54,6 +54,7 @@ public class AutoConstants {
     public static double vel;
     public static Pose currentPose;
     public static int subState;
+    public static boolean timeoutTriggered = false;
 
     public static class Blue {
         // ===Poses===

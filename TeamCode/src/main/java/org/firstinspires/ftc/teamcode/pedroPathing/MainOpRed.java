@@ -79,7 +79,21 @@ public class MainOpRed extends LinearOpMode {
         boolean xSpin = false;
         int pathState = 0;
         int shooterTargetVelocity = 1200;
-        int currentState =0;
+        int currentState = 0;
+        Pose exPose = new Pose(14, 65, Math.toRadians(0));
+        int exR = 30;
+        double diffX;
+        double diffY;
+        boolean inZone = false;
+        double unitX;
+        double unitY;
+        double escX;
+        double escY;
+        double distance;
+        boolean insideZone;
+        boolean escapingZone = false;
+        Pose escPose;
+        Path escPath;
         Timer pathTimer;
         pathTimer = new Timer();
 
@@ -87,12 +101,48 @@ public class MainOpRed extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             currentPose = follower.getPose();
-
             follower.update();
+
+            diffX = currentPose.getX() - exPose.getX();
+            diffY = currentPose.getY() - exPose.getY();
+            distance = Math.sqrt(diffX * diffX + diffY * diffY);
+
+            insideZone = distance < exR;
+
+            if (insideZone && !escapingZone) {
+                escapingZone = true;
+
+                unitX = diffX / distance;
+                unitY = diffY / distance;
+
+                escX = currentPose.getX() + unitX * 10;
+                escY = currentPose.getY() + unitY * 10;
+                escPose = new Pose(escX, escY, currentPose.getHeading());
+
+                escPath = new Path(new BezierLine(currentPose, escPose));
+                escPath.setLinearHeadingInterpolation(
+                        currentPose.getHeading(),
+                        currentPose.getHeading()
+                );
+
+                follower.followPath(escPath);
+            }
+
+            if (escapingZone && !follower.isBusy()) {
+                follower.breakFollowing();
+                escapingZone = false;
+            }
+
+
+
             telemetry.addData("Pose", follower.getPose());
             telemetry.addData("xSpin", xSpin);
+            telemetry.addData("Inzone", inZone);
+            telemetry.addData("diffX", diffX);
+            telemetry.addData("diffY", diffY);
+            telemetry.addData("Distance", distance);
             telemetry.update();
-            vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
+            vel = (shooterRight.getVelocity() + shooterLeft.getVelocity()) / 2;
             double y = -gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x * 1.1;
             double rx = gamepad1.right_stick_x;
@@ -103,97 +153,97 @@ public class MainOpRed extends LinearOpMode {
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
 
-            frontLeft.setPower(frontLeftPower);
-            backLeft.setPower(backLeftPower);
-            frontRight.setPower(frontRightPower);
-            backRight.setPower(backRightPower);
+            if (!escapingZone) {
 
-            if (gamepad1.yWasPressed()) {
+                frontLeft.setPower(frontLeftPower);
+                backLeft.setPower(backLeftPower);
+                frontRight.setPower(frontRightPower);
+                backRight.setPower(backRightPower);
+
+                if (gamepad1.yWasPressed()) {
+                    if (shooting) {
+                        shooting = false;
+                        follower.breakFollowing();
+                    } else {
+                        shooting = true;
+                        pathState = 0;
+                    }
+                }
+
+
+                if (!shooting) {
+                    if (gamepad1.xWasPressed()) {
+                        xSpin = !xSpin;
+                    }
+
+                    if (xSpin) {
+                        shooterLeft.setVelocity(shooterTargetVelocity);
+                        shooterRight.setVelocity(shooterTargetVelocity);
+                    } else {
+                        shooterLeft.setVelocity(0);
+                        shooterRight.setVelocity(0);
+                    }
+
+                    if (gamepad1.left_bumper) {
+                        intake.setPower(-1);
+                    } else {
+                        intake.setPower(gamepad1.left_trigger);
+                    }
+
+                    if (gamepad1.right_bumper) {
+                        upper.setPower(-1);
+                    } else {
+                        upper.setPower(gamepad1.right_trigger);
+                    }
+                }
+
+
                 if (shooting) {
-                    shooting = false;
-                    follower.breakFollowing();
-                } else {
-                    shooting = true;
-                    pathState = 0;
-                }
-            }
+                    if (pathState == 0 && !follower.isBusy()) {
 
+                        toShoot = new Path(new BezierLine(currentPose, shootAt));
+                        toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
+                        follower.followPath(toShoot);
+                        pathState = 1;
+                        pathTimer.resetTimer();
 
-            if (!shooting) {
-                if (gamepad1.xWasPressed()) {
-                    xSpin = !xSpin;
-                }
+                    } else if (pathState == 1 && !follower.isBusy()) {
+                        if (pathTimer.getElapsedTimeSeconds() > 2) {
 
-                if (xSpin) {
-                    shooterLeft.setVelocity(shooterTargetVelocity);
-                    shooterRight.setVelocity(shooterTargetVelocity);
-                } else {
-                    shooterLeft.setVelocity(0);
-                    shooterRight.setVelocity(0);
-                }
+                            Pose llPose = getPoseFromLimelight();
 
-                if (gamepad1.left_bumper) {
-                    intake.setPower(-1);
-                } else {
-                    intake.setPower(gamepad1.left_trigger);
-                }
+                            if (llPose != null) {
+                                telemetry.addData("Result:", llPose);
 
-                if (gamepad1.right_bumper) {
-                    upper.setPower(-1);
-                } else {
-                    upper.setPower(gamepad1.right_trigger);
-                }
-            }
+                                Pose corrected = getCorrectedPose(llPose, shootAt);
+                                toShoot = new Path(new BezierLine(corrected, shootAt));
+                                toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
 
+                                follower.followPath(toShoot);
 
+                            } else {
+                                telemetry.addData("Result:", null);
+                            }
+                            telemetry.update();
 
-            if (shooting) {
-                if (pathState == 0 && !follower.isBusy()) {
-
-                    toShoot = new Path(new BezierLine(currentPose, shootAt));
-                    toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
-
-                    follower.followPath(toShoot);
-                    pathState = 1;
-                    pathTimer.resetTimer();
-
-                } else if (pathState == 1 && !follower.isBusy()) {
-                    if (pathTimer.getElapsedTimeSeconds() > 2) {
-
-                        Pose llPose = getPoseFromLimelight();
-
-                        if (llPose != null) {
-                            telemetry.addData("Result:", llPose);
-
-                            Pose corrected = getCorrectedPose(llPose, shootAt);
-                            toShoot = new Path(new BezierLine(corrected, shootAt));
-                            toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
-
-                            follower.followPath(toShoot);
-
-                        } else {
-                            telemetry.addData("Result:", null);
+                            pathState = 2;
                         }
-                        telemetry.update();
+                    } else if (pathState == 2 && !follower.isBusy()) {
+                        shooterLeft.setVelocity(shooterTargetVelocity);
+                        shooterRight.setVelocity(shooterTargetVelocity);
 
-                        pathState = 2;
-                    }
-                } else if (pathState == 2 && !follower.isBusy()) {
-                    shooterLeft.setVelocity(shooterTargetVelocity);
-                    shooterRight.setVelocity(shooterTargetVelocity);
+                        if (vel >= 1200 && currentState == 0) {
+                            currentState = 1;
+                        } else if (currentState == 1) {
+                            upper.setPower(1);
+                            intake.setPower(1);
 
-                    if (vel >= 1200 && currentState == 0) {
-                        currentState = 1;
-                    }
-                    else if (currentState == 1) {
-                        upper.setPower(1);
-                        intake.setPower(1);
-
-                        if (vel <= 1100) {
-                            upper.setPower(0);
-                            intake.setPower(0);
-                            currentState = 0;
+                            if (vel <= 1100) {
+                                upper.setPower(0);
+                                intake.setPower(0);
+                                currentState = 0;
+                            }
                         }
                     }
                 }
