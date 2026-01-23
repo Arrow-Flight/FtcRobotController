@@ -80,6 +80,15 @@ public class MainOpBlue extends LinearOpMode {
         int pathState = 0;
         int shooterTargetVelocity = 1200;
         int currentState =0;
+        Pose exPose = new Pose(130, 70, Math.toRadians(0));
+        int exR = 20;
+        double diffX;
+        double diffY;
+        boolean inZone;
+        double escX;
+        double escY;
+        Pose escPose;
+        Path escPath;
         Timer pathTimer;
         pathTimer = new Timer();
 
@@ -87,10 +96,30 @@ public class MainOpBlue extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             currentPose = follower.getPose();
-
             follower.update();
+
+            diffX = (exPose.getX() - currentPose.getX());
+            diffY = (exPose.getY() - currentPose.getY());
+            inZone = ((diffY/diffX) < exR);
+
+            /*if (inZone) {
+                escX = (diffX + currentPose.getX());
+                escY = (diffY + currentPose.getX());
+                escPose = new Pose(escX, escY, currentPose.getHeading());
+
+                escPath = new Path(new BezierLine(currentPose, escPose));
+                escPath.setLinearHeadingInterpolation(currentPose.getHeading(),exPose.getHeading());
+                follower.followPath(escPath);
+            }
+
+             */
+
             telemetry.addData("Pose", follower.getPose());
             telemetry.addData("xSpin", xSpin);
+            telemetry.addData("Inzone", inZone);
+            telemetry.addData("diffX", diffX);
+            telemetry.addData("diffY", diffY);
+            telemetry.addData("Distance", (diffY/diffX));
             telemetry.update();
             vel = (shooterRight.getVelocity() + shooterLeft.getVelocity())/2;
             double y = -gamepad1.left_stick_y;
@@ -103,97 +132,97 @@ public class MainOpBlue extends LinearOpMode {
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
 
-            frontLeft.setPower(frontLeftPower);
-            backLeft.setPower(backLeftPower);
-            frontRight.setPower(frontRightPower);
-            backRight.setPower(backRightPower);
+            if (true) {
 
-            if (gamepad1.yWasPressed()) {
+                frontLeft.setPower(frontLeftPower);
+                backLeft.setPower(backLeftPower);
+                frontRight.setPower(frontRightPower);
+                backRight.setPower(backRightPower);
+
+                if (gamepad1.yWasPressed()) {
+                    if (shooting) {
+                        shooting = false;
+                        follower.breakFollowing();
+                    } else {
+                        shooting = true;
+                        pathState = 0;
+                    }
+                }
+
+
+                if (!shooting) {
+                    if (gamepad1.xWasPressed()) {
+                        xSpin = !xSpin;
+                    }
+
+                    if (xSpin) {
+                        shooterLeft.setVelocity(shooterTargetVelocity);
+                        shooterRight.setVelocity(shooterTargetVelocity);
+                    } else {
+                        shooterLeft.setVelocity(0);
+                        shooterRight.setVelocity(0);
+                    }
+
+                    if (gamepad1.left_bumper) {
+                        intake.setPower(-1);
+                    } else {
+                        intake.setPower(gamepad1.left_trigger);
+                    }
+
+                    if (gamepad1.right_bumper) {
+                        upper.setPower(-1);
+                    } else {
+                        upper.setPower(gamepad1.right_trigger);
+                    }
+                }
+
+
                 if (shooting) {
-                    shooting = false;
-                    follower.breakFollowing();
-                } else {
-                    shooting = true;
-                    pathState = 0;
-                }
-            }
+                    if (pathState == 0 && !follower.isBusy()) {
 
+                        toShoot = new Path(new BezierLine(currentPose, shootAt));
+                        toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
+                        follower.followPath(toShoot);
+                        pathState = 1;
+                        pathTimer.resetTimer();
 
-            if (!shooting) {
-                if (gamepad1.xWasPressed()) {
-                    xSpin = !xSpin;
-                }
+                    } else if (pathState == 1 && !follower.isBusy()) {
+                        if (pathTimer.getElapsedTimeSeconds() > 2) {
 
-                if (xSpin) {
-                    shooterLeft.setVelocity(shooterTargetVelocity);
-                    shooterRight.setVelocity(shooterTargetVelocity);
-                } else {
-                    shooterLeft.setVelocity(0);
-                    shooterRight.setVelocity(0);
-                }
+                            Pose llPose = getPoseFromLimelight();
 
-                if (gamepad1.left_bumper) {
-                    intake.setPower(-1);
-                } else {
-                    intake.setPower(gamepad1.left_trigger);
-                }
+                            if (llPose != null) {
+                                telemetry.addData("Result:", llPose);
 
-                if (gamepad1.right_bumper) {
-                    upper.setPower(-1);
-                } else {
-                    upper.setPower(gamepad1.right_trigger);
-                }
-            }
+                                Pose corrected = getCorrectedPose(llPose, shootAt);
+                                toShoot = new Path(new BezierLine(corrected, shootAt));
+                                toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
 
+                                follower.followPath(toShoot);
 
+                            } else {
+                                telemetry.addData("Result:", null);
+                            }
+                            telemetry.update();
 
-            if (shooting) {
-                if (pathState == 0 && !follower.isBusy()) {
-
-                    toShoot = new Path(new BezierLine(currentPose, shootAt));
-                    toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
-
-                    follower.followPath(toShoot);
-                    pathState = 1;
-                    pathTimer.resetTimer();
-
-                } else if (pathState == 1 && !follower.isBusy()) {
-                    if (pathTimer.getElapsedTimeSeconds() > 2) {
-
-                        Pose llPose = getPoseFromLimelight();
-
-                        if (llPose != null) {
-                            telemetry.addData("Result:", llPose);
-
-                            Pose corrected = getCorrectedPose(llPose, shootAt);
-                            toShoot = new Path(new BezierLine(corrected, shootAt));
-                            toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
-
-                            follower.followPath(toShoot);
-
-                        } else {
-                            telemetry.addData("Result:", null);
+                            pathState = 2;
                         }
-                        telemetry.update();
+                    } else if (pathState == 2 && !follower.isBusy()) {
+                        shooterLeft.setVelocity(shooterTargetVelocity);
+                        shooterRight.setVelocity(shooterTargetVelocity);
 
-                        pathState = 2;
-                    }
-                } else if (pathState == 2 && !follower.isBusy()) {
-                    shooterLeft.setVelocity(shooterTargetVelocity);
-                    shooterRight.setVelocity(shooterTargetVelocity);
+                        if (vel >= 1200 && currentState == 0) {
+                            currentState = 1;
+                        } else if (currentState == 1) {
+                            upper.setPower(1);
+                            intake.setPower(1);
 
-                    if (vel >= 1200 && currentState == 0) {
-                        currentState = 1;
-                    }
-                    else if (currentState == 1) {
-                        upper.setPower(1);
-                        intake.setPower(1);
-
-                        if (vel <= 1100) {
-                            upper.setPower(0);
-                            intake.setPower(0);
-                            currentState = 0;
+                            if (vel <= 1100) {
+                                upper.setPower(0);
+                                intake.setPower(0);
+                                currentState = 0;
+                            }
                         }
                     }
                 }

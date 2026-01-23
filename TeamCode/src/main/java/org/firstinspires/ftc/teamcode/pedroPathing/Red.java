@@ -182,6 +182,11 @@ public class Red extends OpMode {
                 pathState = 11;
             }
         } else {
+            follower.breakFollowing();
+            shooterLeft.setVelocity(0);
+            shooterRight.setVelocity(0);
+            intake.setPower(0);
+            upper.setPower(0);
             follower.followPath(goToEnd);
             pathState = 11;
         }
