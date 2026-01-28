@@ -182,14 +182,16 @@ public class Red extends OpMode {
                 pathState = 11;
             }
         } else {
-            timeoutTriggered = true;
+            if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
+                timeoutTriggered = true;
 
-            follower.breakFollowing();
-            shooterLeft.setVelocity(0);
-            shooterRight.setVelocity(0);
-            intake.setPower(0);
-            upper.setPower(0);
-            follower.followPath(goToEnd);
+                follower.breakFollowing();
+                shooterLeft.setVelocity(0);
+                shooterRight.setVelocity(0);
+                intake.setPower(0);
+                upper.setPower(0);
+                follower.followPath(goToEnd);
+            }
         }
     }
 }

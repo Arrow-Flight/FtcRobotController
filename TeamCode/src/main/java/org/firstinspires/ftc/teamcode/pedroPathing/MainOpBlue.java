@@ -137,23 +137,35 @@ public class MainOpBlue extends LinearOpMode {
 
             telemetry.addData("Pose", follower.getPose());
                 telemetry.addData("xSpin", xSpin);
-                telemetry.addData("Inzone", inZone);
+                telemetry.addData("inZone", inZone);
                 telemetry.addData("diffX", diffX);
                 telemetry.addData("diffY", diffY);
                 telemetry.addData("Distance", distance);
                 telemetry.update();
                 vel = (shooterRight.getVelocity() + shooterLeft.getVelocity()) / 2;
-                double y = -gamepad1.left_stick_y;
-                double x = gamepad1.left_stick_x * 1.1;
-                double rx = gamepad1.right_stick_x;
 
-                double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-                double frontLeftPower = (y + x + rx) / denominator;
-                double backLeftPower = (y - x + rx) / denominator;
-                double frontRightPower = (y - x - rx) / denominator;
-                double backRightPower = (y + x - rx) / denominator;
 
                 if (!escapingZone) {
+
+                    double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
+                    double x = gamepad1.left_stick_x;
+                    double rx = gamepad1.right_stick_x;
+
+
+                    double botHeading = follower.getHeading();
+
+
+                    double rotX = x * Math.cos(-botHeading) + y * Math.sin(botHeading);
+                    double rotY = x * Math.sin(-botHeading) + y * Math.cos(botHeading);
+
+                    rotX = rotX * 1.1;
+
+
+                    double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+                    double frontLeftPower = (rotY + rotX + rx) / denominator;
+                    double backLeftPower = (rotY - rotX + rx) / denominator;
+                    double frontRightPower = (rotY - rotX - rx) / denominator;
+                    double backRightPower = (rotY + rotX - rx) / denominator;
 
                     frontLeft.setPower(frontLeftPower);
                     backLeft.setPower(backLeftPower);

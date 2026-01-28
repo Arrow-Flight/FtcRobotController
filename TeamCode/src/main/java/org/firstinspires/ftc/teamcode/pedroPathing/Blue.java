@@ -182,7 +182,7 @@ public class Blue extends OpMode {
                 pathState = 11;
             }
         } else {
-            if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 27) {
+            if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
                 timeoutTriggered = true;
 
                 follower.breakFollowing();
