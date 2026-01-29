@@ -147,16 +147,16 @@ public class MainOpBlue extends LinearOpMode {
 
                 if (!escapingZone) {
 
-                    double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
-                    double x = gamepad1.left_stick_x;
+                    double y = gamepad1.left_stick_y; // Remember, Y stick value is reversed
+                    double x = -gamepad1.left_stick_x;
                     double rx = gamepad1.right_stick_x;
 
 
-                    double botHeading = follower.getHeading();
+                    double botHeading = -follower.getHeading();
 
 
-                    double rotX = x * Math.cos(-botHeading) + y * Math.sin(botHeading);
-                    double rotY = x * Math.sin(-botHeading) + y * Math.cos(botHeading);
+                    double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
+                    double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
 
                     rotX = rotX * 1.1;
 
