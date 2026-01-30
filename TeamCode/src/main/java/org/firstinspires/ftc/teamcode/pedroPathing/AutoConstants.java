@@ -59,7 +59,7 @@ public class AutoConstants {
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(22.8, 128, Math.toRadians(-45));
-        public static Pose shootPose = new Pose(52, 96, Math.toRadians(-50));
+        public static Pose shootPose = new Pose(56, 92, Math.toRadians(-50));
         public static Pose firstSpikeInitial = new Pose(40, 85, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(15,85, Math.toRadians(180));
         public static Pose secondSpikeInitial = new Pose(40,62, Math.toRadians(180));
