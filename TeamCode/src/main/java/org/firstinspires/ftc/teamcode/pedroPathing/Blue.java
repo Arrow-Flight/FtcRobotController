@@ -96,8 +96,6 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Time", timeout.getElapsedTimeSeconds());
-        telemetry.update();
         vel = (shooterRight.getVelocity() + shooterLeft.getVelocity()) / 2;
         follower.update();
 
@@ -182,6 +180,7 @@ public class Blue extends OpMode {
                 pathState = 11;
             }
         } else {
+            /*
             if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
                 timeoutTriggered = true;
 
@@ -192,6 +191,8 @@ public class Blue extends OpMode {
                 upper.setPower(0);
                 follower.followPath(goToEnd);
             }
+            TODO: Undo This
+             */
         }
     }
 }

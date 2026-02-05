@@ -1,12 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import com.acmerobotics.dashboard.config.Config;
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
-
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
-import com.pedropathing.ftc.FTCCoordinates;
-import com.pedropathing.geometry.PedroCoordinates;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -16,6 +11,9 @@ import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 public class AutoConstants {
     // ===Limelight===
@@ -103,30 +101,29 @@ public class AutoConstants {
         }
 
         // 2) Relocalize with Limelight (once, when settled)
-        else if (subState == 2 && !follower.isBusy()) {
-            telemetry.addLine("Reset");
-            telemetry.update();
-            if (pathTimer.getElapsedTimeSeconds() > 2) {
+        else if (subState == 2 && !follower.isBusy() && pathTimer.getElapsedTimeSeconds() >= 2) {
+                Pose llpose = getllPose();
 
-                Pose llPose = getPoseFromLimelight();
+                if (llpose != null) {
+                    telemetry.addData("X", llpose.getX());
+                    telemetry.addData("Y", llpose.getY());
+                    telemetry.addData("Heading", follower.getHeading());
+                    telemetry.update();
 
-                if (llPose != null) {
-                    telemetry.addData("Result:", llPose);
+                    //follower.setPose(llpose);
+                    //currentPose = follower.getPose();
 
-                    Pose corrected = getCorrectedPose(llPose, shootAt);
-                    toShoot = new Path(new BezierLine(corrected, shootAt));
-                    toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
+                    //toShoot = new Path(new BezierLine(currentPose, shootAt));
+                    //toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
-                    follower.followPath(toShoot);
-
-                } else {
-                    telemetry.addData("Result:", null);
-                }
-                telemetry.update();
-
-                subState = 3;
+                    //follower.followPath(toShoot);
+                    //pathTimer.resetTimer();
             }
+
+            subState = 4; //TODO: Change to 3
         }
+
+
 
         // 3) Shoot balls
         else if (subState == 3 && !follower.isBusy()) {
@@ -164,46 +161,46 @@ public class AutoConstants {
             }
         }
     }
-    public static Pose getPoseFromLimelight() {
 
-        if (limelight == null) return null;
-
+    private static final int POSE_SAMPLE_COUNT = 5;
+    private static final Deque<Pose> poseBuffer = new ArrayDeque<>();
+    private static Pose getllPose() {
         LLResult result = limelight.getLatestResult();
         if (result == null || !result.isValid()) return null;
 
         Pose3D botPose = result.getBotpose();
         if (botPose == null) return null;
 
-        // FTC field coordinates (meters)
-        double xMeters = botPose.getPosition().x;
-        double yMeters = botPose.getPosition().y;
-        double headingRad = botPose.getOrientation().getYaw();
+        // Raw meters
+        double x_meters = botPose.getPosition().x;
+        double y_meters = botPose.getPosition().y;
 
-        // Convert meters → inches
-        double xInches = xMeters * 39.3701;
-        double yInches = yMeters * 39.3701;
-        double headingDeg = Math.toDegrees(headingRad);
+        // Convert to inches
+        double x = (x_meters * 39.37007874) + 72;
+        double y = -(y_meters * 39.37007874) + 72;
 
-        Pose temp = new Pose(xInches, yInches, headingDeg, FTCCoordinates.INSTANCE).getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+        Pose newPose = new Pose(x, y, follower.getHeading());
 
-        // Transform Coordinates
-        double transX = temp.getX() + 64.5;
-        double transY = temp.getY() + 71.5;
+        // Add to buffer
+        poseBuffer.addLast(newPose);
+        if (poseBuffer.size() > POSE_SAMPLE_COUNT) {
+            poseBuffer.removeFirst();
+        }
 
-        // Convert FTC → Pedro coordinates
-        return new Pose(transX, transY, temp.getHeading());
+        // Compute average
+        double sumX = 0;
+        double sumY = 0;
+
+        for (Pose p : poseBuffer) {
+            sumX += p.getX();
+            sumY += p.getY();
+        }
+
+        double avgX = sumX / poseBuffer.size();
+        double avgY = sumY / poseBuffer.size();
+
+        return new Pose(avgX, avgY, follower.getHeading());
     }
 
-    public static Pose getCorrectedPose(Pose llPose, Pose shootAt) {
-        double xOff = shootAt.getX() - llPose.getX();
-        double yOff = shootAt.getY() - llPose.getY();
-        double headOff = shootAt.getHeading() - llPose.getHeading();
-
-        double xCorrect = currentPose.getX() + xOff;
-        double yCorrect = currentPose.getY() + yOff;
-        double headCorrect = currentPose.getHeading() + headOff;
-
-        return new Pose(xCorrect, yCorrect, headCorrect);
-    }
 }
 
