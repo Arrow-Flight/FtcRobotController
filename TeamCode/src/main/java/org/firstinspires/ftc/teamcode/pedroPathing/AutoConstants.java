@@ -104,14 +104,11 @@ public class AutoConstants {
 
         // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy()) {
-            telemetry.addLine("Reset");
-            telemetry.update();
             if (pathTimer.getElapsedTimeSeconds() > 2) {
 
                 Pose llPose = getPoseFromLimelight();
 
                 if (llPose != null) {
-                    telemetry.addData("Result:", llPose);
 
                     Pose corrected = getCorrectedPose(llPose, shootAt);
                     toShoot = new Path(new BezierLine(corrected, shootAt));
@@ -119,10 +116,7 @@ public class AutoConstants {
 
                     follower.followPath(toShoot);
 
-                } else {
-                    telemetry.addData("Result:", null);
                 }
-                telemetry.update();
 
                 subState = 3;
             }
@@ -147,6 +141,9 @@ public class AutoConstants {
 
             shooterLeft.setVelocity(shooterTargetVelocity);
             shooterRight.setVelocity(shooterTargetVelocity);
+
+            telemetry.addData("vel", vel);
+            telemetry.update();
 
             if (vel >= 1200 && currentState == 0) {
                 currentState = 1;
