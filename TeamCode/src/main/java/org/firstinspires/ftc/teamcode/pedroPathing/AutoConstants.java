@@ -10,10 +10,6 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 public class AutoConstants {
     // ===Limelight===
@@ -102,15 +98,26 @@ public class AutoConstants {
 
         // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy() && pathTimer.getElapsedTimeSeconds() >= 2) {
-                Pose llpose = getllPose();
+            follower.breakFollowing();
+            LLResult llResult = limelight.getLatestResult();
 
-                if (llpose != null) {
-                    telemetry.addData("X", llpose.getX());
-                    telemetry.addData("Y", llpose.getY());
-                    telemetry.addData("Heading", follower.getHeading());
-                    telemetry.update();
+            if (llResult != null && llResult.isValid()) {
+            double angleX = Math.toRadians(llResult.getTx());
+            double angleY = Math.toRadians(llResult.getTy() + 30);
+            double height = 667.7; // height in mm april tag is above camera
+            double distance = (height/Math.tan(angleY));
 
-                    //follower.setPose(llpose);
+            double X = distance *  Math.sin(angleX);
+            double Y = distance * Math.cos(angleX);
+
+            telemetry.addData("Tx", Math.toDegrees(angleX));
+            telemetry.addData("Ty", Math.toDegrees(angleY));
+            telemetry.addData("Distance", distance);
+            telemetry.addData("X", X);
+            telemetry.addData("Y", Y);
+            }
+
+                    //follower.setPose(llPose);
                     //currentPose = follower.getPose();
 
                     //toShoot = new Path(new BezierLine(currentPose, shootAt));
@@ -118,16 +125,13 @@ public class AutoConstants {
 
                     //follower.followPath(toShoot);
                     //pathTimer.resetTimer();
+
+            //subState = 4; //TODO: Change to 3
             }
-
-            subState = 4; //TODO: Change to 3
-        }
-
 
 
         // 3) Shoot balls
         else if (subState == 3 && !follower.isBusy()) {
-
             if (ballsShot == shots) {
                 pathTimer.resetTimer();
                 pathState = State;
@@ -161,46 +165,5 @@ public class AutoConstants {
             }
         }
     }
-
-    private static final int POSE_SAMPLE_COUNT = 5;
-    private static final Deque<Pose> poseBuffer = new ArrayDeque<>();
-    private static Pose getllPose() {
-        LLResult result = limelight.getLatestResult();
-        if (result == null || !result.isValid()) return null;
-
-        Pose3D botPose = result.getBotpose();
-        if (botPose == null) return null;
-
-        // Raw meters
-        double x_meters = botPose.getPosition().x;
-        double y_meters = botPose.getPosition().y;
-
-        // Convert to inches
-        double x = (x_meters * 39.37007874) + 72;
-        double y = -(y_meters * 39.37007874) + 72;
-
-        Pose newPose = new Pose(x, y, follower.getHeading());
-
-        // Add to buffer
-        poseBuffer.addLast(newPose);
-        if (poseBuffer.size() > POSE_SAMPLE_COUNT) {
-            poseBuffer.removeFirst();
-        }
-
-        // Compute average
-        double sumX = 0;
-        double sumY = 0;
-
-        for (Pose p : poseBuffer) {
-            sumX += p.getX();
-            sumY += p.getY();
-        }
-
-        double avgX = sumX / poseBuffer.size();
-        double avgY = sumY / poseBuffer.size();
-
-        return new Pose(avgX, avgY, follower.getHeading());
-    }
-
 }
 
