@@ -10,8 +10,7 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import javax.crypto.MacSpi;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class AutoConstants {
     // ===Limelight===
@@ -54,7 +53,7 @@ public class AutoConstants {
 
     public static class Blue {
         // ===Poses===
-        public static Pose startingPose = new Pose(22.8, 128, Math.toRadians(-36));
+        public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
         public static Pose shootPose = new Pose(56, 92, Math.toRadians(-36));
         public static Pose firstSpikeInitial = new Pose(40, 85, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(15,85, Math.toRadians(180));
@@ -100,53 +99,32 @@ public class AutoConstants {
 
         // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy() && pathTimer.getElapsedTimeSeconds() >= 2) {
-            follower.breakFollowing();
             LLResult llResult = limelight.getLatestResult();
 
             if (llResult != null && llResult.isValid()) {
-                final double llHeight = 81.6; // Millimeters
-                final double llForward = 188.21499; // Millimeters
-                final double llLeft = 20.201405; // Millimeters
-                final double llFromCenter = Math.sqrt((llForward * llForward) + (llLeft * llLeft));
-                final double llPitch = 30; // Degrees
-                final double tagHeight = 749.5; // Millimeters
-                final double diffHeight = tagHeight - llHeight; // Millimeters
+                Pose3D botPose = llResult.getBotpose();
+                double rawX = botPose.getPosition().x;
+                double rawY = botPose.getPosition().y;
 
-                double tx = llResult.getTx();
-                double ty = llResult.getTy();
+                double xInches = rawX * 39.37;
+                double yInches = rawY * 39.37;
 
-                double headingRad = follower.getHeading();
-                double headingDeg = Math.toDegrees(headingRad);
-                double correctedHeadingDeg = headingDeg + 36;
-                double correctedHeadingRad = Math.toRadians(correctedHeadingDeg);
+                double xCorrect = xInches + 72;
+                double yCorrect = -yInches + 72;
 
-                double diffYDeg = ty + llPitch;
-                double diffYRad = Math.toRadians(diffYDeg);
-                double correctXDeg = tx + 36;
-                double correctXRad = Math.toRadians(correctXDeg);
-
-                double distanceFromTag = diffHeight / Math.tan(diffYRad);
-
-
-                double xFromTag = distanceFromTag * Math.cos(correctXRad);
-                double yFromTag = distanceFromTag * Math.sin(correctXRad);
-
-                double robotXFromTag = xFromTag - (llFromCenter * Math.cos(correctedHeadingRad));
-                double robotYFromTag = yFromTag - (llFromCenter * Math.sin(correctedHeadingRad));
-
-                telemetry.addData("distance", distanceFromTag);
-                telemetry.addData("heading", headingDeg);
-                telemetry.addData("xFromTag", robotXFromTag);
-                telemetry.addData("yFromTag", robotYFromTag);
-            }
+                telemetry.addData("x", xCorrect);
+                telemetry.addData("y", yCorrect);
+                telemetry.addData("LLHeading", botPose.getOrientation().getYaw());
 
                 // Recalculate path to shoot pose with updated position
-               // toShoot = new Path(new BezierLine(currentPose, shootAt));
-               // toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
-               // follower.followPath(toShoot);
-               // pathTimer.resetTimer();
-
-            //subState = 3; // Move to shooting
+                follower.setPose(new Pose(xCorrect, yCorrect, follower.getHeading()));
+                currentPose = follower.getPose();
+                toShoot = new Path(new BezierLine(currentPose, shootAt));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
+                follower.followPath(toShoot);
+                pathTimer.resetTimer();
+            }
+            subState = 4;
         }
 
 
