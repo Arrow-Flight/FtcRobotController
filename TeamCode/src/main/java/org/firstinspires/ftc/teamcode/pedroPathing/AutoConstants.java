@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.pedropathing.control.KalmanFilter;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.pedropathing.follower.Follower;
@@ -99,32 +100,21 @@ public class AutoConstants {
 
         // 2) Relocalize with Limelight (once, when settled)
         else if (subState == 2 && !follower.isBusy() && pathTimer.getElapsedTimeSeconds() >= 2) {
-            LLResult llResult = limelight.getLatestResult();
 
-            if (llResult != null && llResult.isValid()) {
-                Pose3D botPose = llResult.getBotpose();
-                double rawX = botPose.getPosition().x;
-                double rawY = botPose.getPosition().y;
+            double xError = getStartingError().getX();
+            double yError = getStartingError().getY();
 
-                double xInches = rawX * 39.37;
-                double yInches = rawY * 39.37;
+            Pose correctedTarget = new Pose(
+                    shootAt.getX() + xError,
+                    shootAt.getY() + yError,
+                    shootAt.getHeading()
+            );
 
-                double xCorrect = xInches + 72;
-                double yCorrect = -yInches + 72;
-
-                telemetry.addData("x", xCorrect);
-                telemetry.addData("y", yCorrect);
-                telemetry.addData("LLHeading", botPose.getOrientation().getYaw());
-
-                // Recalculate path to shoot pose with updated position
-                follower.setPose(new Pose(xCorrect, yCorrect, follower.getHeading()));
-                currentPose = follower.getPose();
-                toShoot = new Path(new BezierLine(currentPose, shootAt));
-                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
-                follower.followPath(toShoot);
-                pathTimer.resetTimer();
-            }
-            subState = 4;
+            toShoot = new Path(new BezierLine(currentPose, correctedTarget));
+            toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
+            follower.followPath(toShoot);
+            pathTimer.resetTimer();
+            subState = 3;
         }
 
 
@@ -162,6 +152,32 @@ public class AutoConstants {
                 }
             }
         }
+    }
+
+    // Declare these as class-level fields, one filter per axis
+    KalmanFilter xFilter = new KalmanFilter(new KalmanFilter(0.1, 0.4));
+    KalmanFilter yFilter = new KalmanFilter(new KalmanFilter(0.1, 0.4));
+
+    public static Pose getStartingError() {
+        LLResult llResult = limelight.getLatestResult();
+
+        if (llResult != null && llResult.isValid()) {
+            Pose3D botPose = llResult.getBotpose();
+            double xInches = botPose.getPosition().x * 39.37;
+            double yInches = botPose.getPosition().y * 39.37;
+
+            double targetX = xInches + 72;
+            double targetY = -yInches + 72;
+
+            // Filter the limelight position before calculating error
+            double filteredX = xFilter.filter(targetX);
+            double filteredY = yFilter.filter(targetY);
+
+            double xError = filteredX - currentPose.getX();
+            double yError = filteredY - currentPose.getY();
+
+            return new Pose(xError, yError);
+        } else return new Pose(0, 0);
     }
 }
 
