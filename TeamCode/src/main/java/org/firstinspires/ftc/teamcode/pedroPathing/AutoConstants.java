@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import com.pedropathing.control.KalmanFilter;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.pedropathing.follower.Follower;
@@ -27,16 +28,8 @@ public class AutoConstants {
     public static DcMotorEx shooterRight;
 
     // ===Paths===
+    public static Path spikeMarkPath;
     public static Path toShoot;
-    public static Path shootToFirstSpike;
-    public static Path firstSpike;
-    public static Path shootFromFirstSpike;
-    public static Path shootToSecondSpike;
-    public static Path secondSpike;
-    public static Path shootFromSecondSpike;
-    public static Path shootToThirdSpike;
-    public static Path thirdSpike;
-    public static Path shootFromThirdSpike;
     public static Path goToEnd;
 
     // ===Misc.===
@@ -44,24 +37,22 @@ public class AutoConstants {
     public static Timer pathTimer;
     public static Timer timeout;
     public static int pathState;
-    public static int currentState = 0;
-    public static int ballsShot = 0;
-    public static int shooterTargetVelocity = 1200;
-    public static double vel;
     public static Pose currentPose;
     public static int subState;
     public static boolean timeoutTriggered = false;
+    public static double xError = 0;
+    public static double yError = 0;
 
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
         public static Pose shootPose = new Pose(56, 92, Math.toRadians(-36));
-        public static Pose firstSpikeInitial = new Pose(40, 85, Math.toRadians(180));
-        public static Pose firstSpikeFinal = new Pose(15,85, Math.toRadians(180));
-        public static Pose secondSpikeInitial = new Pose(40,62, Math.toRadians(180));
-        public static Pose secondSpikeFinal = new Pose(5,62, Math.toRadians(180));
-        public static Pose thirdSpikeInitial = new Pose(40,40, Math.toRadians(180));
-        public static Pose thirdSpikeFinal = new Pose(5,40, Math.toRadians(180));
+        public static Pose firstSpikeInitial = new Pose(50, 85, Math.toRadians(180));
+        public static Pose firstSpikeFinal = new Pose(20,85, Math.toRadians(180));
+        public static Pose secondSpikeInitial = new Pose(50,62, Math.toRadians(180));
+        public static Pose secondSpikeFinal = new Pose(15,62, Math.toRadians(180));
+        public static Pose thirdSpikeInitial = new Pose(50,40, Math.toRadians(180));
+        public static Pose thirdSpikeFinal = new Pose(15,40, Math.toRadians(180));
         public static Pose endPose = new Pose(35,75, Math.toRadians(0));
 
         public static int pipeline = 7;
@@ -70,93 +61,48 @@ public class AutoConstants {
         // ===Poses===
         public static Pose startingPose = new Pose(121.2, 128, Math.toRadians(-135));
         public static Pose shootPose = new Pose(92, 92, Math.toRadians(-138));
-        public static Pose firstSpikeInitial = new Pose(100, 85, Math.toRadians(5));
-        public static Pose firstSpikeFinal = new Pose(129,85, Math.toRadians(5));
-        public static Pose secondSpikeInitial = new Pose(100,62, Math.toRadians(5));
-        public static Pose secondSpikeFinal = new Pose(139,62, Math.toRadians(5));
-        public static Pose thirdSpikeInitial = new Pose(100,40, Math.toRadians(5));
-        public static Pose thirdSpikeFinal = new Pose(139,40, Math.toRadians(5));
+        public static Pose firstSpikeInitial = new Pose(95, 85, Math.toRadians(5));
+        public static Pose firstSpikeFinal = new Pose(124,85, Math.toRadians(5));
+        public static Pose secondSpikeInitial = new Pose(95,62, Math.toRadians(5));
+        public static Pose secondSpikeFinal = new Pose(134,62, Math.toRadians(5));
+        public static Pose thirdSpikeInitial = new Pose(95,40, Math.toRadians(5));
+        public static Pose thirdSpikeFinal = new Pose(134,40, Math.toRadians(5));
         public static Pose endPose = new Pose(115,75, Math.toRadians(180));
 
         public static int pipeline = 8;
     }
 
-    // =======================
-    // SHOOT STATE MACHINE
-    // =======================
-    public static void Shoot(int State, int shots, Pose shootAt, Telemetry telemetry) {
+    public static void Shoot(Telemetry telemetry) {
+           telemetry.addData("SHOT?", "YES!");
+    }
 
-        // Step 1: Move from current pose to shoot pose
+    public static void collectSpike(int state, Pose start, Pose end) {
         if (subState == 1 && !follower.isBusy()) {
-            currentPose = follower.getPose();
 
-            toShoot = new Path(new BezierLine(currentPose, shootAt));
-            toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
+            spikeMarkPath = new Path(new BezierLine(currentPose, start));
+            spikeMarkPath.setLinearHeadingInterpolation(currentPose.getHeading(), start.getHeading());
 
-            follower.followPath(toShoot);
-            pathTimer.resetTimer();
+            follower.followPath(spikeMarkPath);
             subState = 2;
-        }
 
-        // 2) Relocalize with Limelight (once, when settled)
-        else if (subState == 2 && !follower.isBusy() && pathTimer.getElapsedTimeSeconds() >= 2) {
+        } else if (subState == 2 && !follower.isBusy()) {
+            intake.setPower(1);
 
-            double xError = getStartingError().getX();
-            double yError = getStartingError().getY();
+            spikeMarkPath = new Path(new BezierLine(start, end));
+            spikeMarkPath.setLinearHeadingInterpolation(start.getHeading(),end.getHeading());
 
-            Pose correctedTarget = new Pose(
-                    shootAt.getX() + xError,
-                    shootAt.getY() + yError,
-                    shootAt.getHeading()
-            );
-
-            toShoot = new Path(new BezierLine(currentPose, correctedTarget));
-            toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
-            follower.followPath(toShoot);
-            pathTimer.resetTimer();
+            follower.followPath(spikeMarkPath);
             subState = 3;
-        }
-
-
-        // 3) Shoot balls
-        else if (subState == 3 && !follower.isBusy()) {
-            if (ballsShot == shots) {
-                pathTimer.resetTimer();
-                pathState = State;
-
-                upper.setPower(0);
-                intake.setPower(0);
-                shooterRight.setVelocity(0);
-                shooterLeft.setVelocity(0);
-
-                ballsShot = 0;
-                subState = 0;
-                return;
-            }
-
-            shooterLeft.setVelocity(shooterTargetVelocity);
-            shooterRight.setVelocity(shooterTargetVelocity);
-
-            if (vel >= 1200 && currentState == 0) {
-                currentState = 1;
-            }
-            else if (currentState == 1) {
-                upper.setPower(1);
-                intake.setPower(1);
-
-                if (vel <= 1100) {
-                    upper.setPower(0);
-                    intake.setPower(0);
-                    ballsShot++;
-                    currentState = 0;
-                }
-            }
+            pathState = state;
         }
     }
 
-    // Declare these as class-level fields, one filter per axis
-    KalmanFilter xFilter = new KalmanFilter(new KalmanFilter(0.1, 0.4));
-    KalmanFilter yFilter = new KalmanFilter(new KalmanFilter(0.1, 0.4));
+    public static void goToShoot(){
+        toShoot = new Path(new BezierLine(currentPose, shootPose));
+        toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
+
+        follower.followPath(toShoot);
+    }
 
     public static Pose getStartingError() {
         LLResult llResult = limelight.getLatestResult();
@@ -169,15 +115,16 @@ public class AutoConstants {
             double targetX = xInches + 72;
             double targetY = -yInches + 72;
 
-            // Filter the limelight position before calculating error
-            double filteredX = xFilter.filter(targetX);
-            double filteredY = yFilter.filter(targetY);
+            double xError = targetX - currentPose.getX();
+            double yError = targetY - currentPose.getY();
 
-            double xError = filteredX - currentPose.getX();
-            double yError = filteredY - currentPose.getY();
+            return new Pose(xError,yError);
+        } else return new Pose(0,0);
+    }
 
-            return new Pose(xError, yError);
-        } else return new Pose(0, 0);
+    public static Pose getCorrectedPose() {
+        Pose current = follower.getPose();
+        return new Pose(current.getX() + xError, current.getY() + yError, current.getHeading());
     }
 }
 

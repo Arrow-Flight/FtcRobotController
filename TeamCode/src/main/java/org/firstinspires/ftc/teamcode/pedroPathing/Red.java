@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
@@ -34,12 +35,16 @@ public class Red extends OpMode {
         // Set Up shooter motors
         shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
         PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 18.5);
+
         shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
         shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
@@ -51,38 +56,7 @@ public class Red extends OpMode {
         follower.setStartingPose(startingPose);
         pathState = 0;
 
-        // Build Paths
-        shootToFirstSpike = new Path(new BezierLine(shootPose, firstSpikeInitial));
-        shootToFirstSpike.setLinearHeadingInterpolation(shootPose.getHeading(),firstSpikeInitial.getHeading());
-
-        firstSpike = new Path(new BezierLine(firstSpikeInitial, firstSpikeFinal));
-        firstSpike.setLinearHeadingInterpolation(firstSpikeInitial.getHeading(),firstSpikeFinal.getHeading());
-
-        shootFromFirstSpike = new Path(new BezierLine(firstSpikeInitial, shootPose));
-        shootFromFirstSpike.setLinearHeadingInterpolation(firstSpikeFinal.getHeading(),shootPose.getHeading());
-
-        shootToSecondSpike = new Path(new BezierLine(shootPose,secondSpikeInitial));
-        shootToSecondSpike.setLinearHeadingInterpolation(shootPose.getHeading(),secondSpikeInitial.getHeading());
-
-        secondSpike = new Path(new BezierLine(secondSpikeInitial,secondSpikeFinal));
-        secondSpike.setLinearHeadingInterpolation(secondSpikeInitial.getHeading(),secondSpikeFinal.getHeading());
-
-        shootFromSecondSpike = new Path(new BezierLine(secondSpikeFinal, shootPose));
-        shootFromSecondSpike.setLinearHeadingInterpolation(secondSpikeFinal.getHeading(), shootPose.getHeading());
-
-        shootToThirdSpike = new Path(new BezierLine(shootPose,thirdSpikeInitial));
-        shootToThirdSpike.setLinearHeadingInterpolation(shootPose.getHeading(),thirdSpikeInitial.getHeading());
-
-        thirdSpike = new Path(new BezierLine(thirdSpikeInitial,thirdSpikeFinal));
-        thirdSpike.setLinearHeadingInterpolation(thirdSpikeInitial.getHeading(),thirdSpikeFinal.getHeading());
-
-        shootFromThirdSpike = new Path(new BezierLine(thirdSpikeFinal, shootPose));
-        shootFromThirdSpike.setLinearHeadingInterpolation(thirdSpikeFinal.getHeading(), shootPose.getHeading());
-
-        goToEnd = new Path(new BezierLine(shootPose, endPose));
-        goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
-
-        // Add Timer
+        // Add Timers
         pathTimer = new Timer();
         timeout = new Timer();
     }
@@ -96,90 +70,110 @@ public class Red extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addData("Time", timeout.getElapsedTimeSeconds());
-        telemetry.update();
-        vel = (shooterRight.getVelocity() + shooterLeft.getVelocity()) / 2;
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {
-            // Step 1: Shoot Initial Balls
-            if (pathState == 0 && subState == 0 && !follower.isBusy()) {
-                subState = 1;
-            }
-            if (pathState == 0) {
-                Shoot(1, 3, shootPose, telemetry);
+            // Step 1: Initial Move
+            if (pathState == 0 && !follower.isBusy()) {
+                currentPose = follower.getPose();
+
+                goToShoot();
+
+                pathTimer.resetTimer();
+                pathState = 1;
             }
 
-            // Step 2: Move to Get Balls From First Spike
-            else if (pathState == 1 && !follower.isBusy()) {
-                follower.followPath(shootToFirstSpike);
+            // Step 2: Calculate Offsets and Fix Position
+            else if (pathState ==1 && pathTimer.getElapsedTimeSeconds() > 2 && !follower.isBusy()) {
+                currentPose = follower.getPose();
+                xError = getStartingError().getX();
+                yError = getStartingError().getY();
+
+                Pose correctedTarget = new Pose(shootPose.getX() + xError, shootPose.getY() + yError, shootPose.getHeading());
+
+                toShoot = new Path(new BezierLine(currentPose, correctedTarget));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
+                follower.followPath(toShoot);
                 pathState = 2;
             }
 
-            // Step 3: Intake Balls On First Spike
+            // Step 3: Shoot Initial Balls
             else if (pathState == 2 && !follower.isBusy()) {
-                intake.setPower(1);
-                follower.followPath(firstSpike);
+                Shoot(telemetry);
                 pathState = 3;
-            }
-
-            // Step 4: Shoot First Spike Ball
-            else if (pathState == 3 && subState == 0 && !follower.isBusy()) {
-                intake.setPower(0);
                 subState = 1;
             }
-            if (pathState == 3) {
-                Shoot(4, 3, shootPose, telemetry);
+
+            // Step 4: Get Balls From First Spike
+            else if (pathState == 3 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
+
+                collectSpike(firstSpikeInitial, firstSpikeFinal);
+                pathState = 4;
             }
 
-            // Step 5: Move to Get Balls From Second Spike
+            // Step 5: Go to Shoot
             else if (pathState == 4 && !follower.isBusy()) {
-                follower.followPath(shootToSecondSpike);
+                intake.setPower(0);
+
+                goToShoot();
                 pathState = 5;
             }
 
-            // Step 6: Intake Balls On Second Spike
+            // Step 6: Shoot First Spike Balls
             else if (pathState == 5 && !follower.isBusy()) {
-                intake.setPower(1);
-                follower.followPath(secondSpike);
-                pathState = 6;
-            }
 
-            // Step 7: Shoot Second Spike Balls
-            else if (pathState == 6 && subState == 0 && !follower.isBusy()) {
-                intake.setPower(0);
+                Shoot(telemetry);
+                pathState = 6;
                 subState = 1;
             }
-            if (pathState == 6) {
-                Shoot(7, 3, shootPose, telemetry);
+
+            // Step 7: Get Balls From Second Spike
+            else if (pathState == 6 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
+
+                collectSpike(secondSpikeInitial, secondSpikeFinal);
+                pathState = 7;
             }
 
-            // Step 8:  Move to Get Balls From Third Spike
+            // Step 8: Go to Shoot
             else if (pathState == 7 && !follower.isBusy()) {
-                follower.followPath(shootToThirdSpike);
+                intake.setPower(0);
+
+                goToShoot();
                 pathState = 8;
             }
 
-            // Step 9: Intake Balls On Third Spike
+            // Step 9: Shoot Second Spike Balls
             else if (pathState == 8 && !follower.isBusy()) {
-                intake.setPower(1);
-                follower.followPath(thirdSpike);
-                pathState = 9;
-            }
 
-            // Step 10: Shoot Third Spike Balls
-            else if (pathState == 9 && subState == 0 && !follower.isBusy()) {
-                intake.setPower(0);
+                Shoot(telemetry);
+                pathState = 9;
                 subState = 1;
             }
-            if (pathState == 9) {
-                Shoot(10, 3, shootPose, telemetry);
+
+            // Step 10:  Get Balls From Third Spike
+            else if (pathState == 7 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
+
+                collectSpike(thirdSpikeInitial, thirdSpikeFinal);
+                pathState = 10;
             }
 
-            // Step 11: Go To End
+            // Step 11: Go to Shoot
             else if (pathState == 10 && !follower.isBusy()) {
-                follower.followPath(goToEnd);
+                intake.setPower(0);
+
+                goToShoot();
                 pathState = 11;
+            }
+
+            // Step 12: Shoot Third Spike Balls
+            else if (pathState == 11 && !follower.isBusy()) {
+
+                Shoot(telemetry);
+                pathState = 12;
+                subState = 1;
             }
         } else {
             if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
@@ -190,8 +184,13 @@ public class Red extends OpMode {
                 shooterRight.setVelocity(0);
                 intake.setPower(0);
                 upper.setPower(0);
+
+                goToEnd = new Path(new BezierLine(shootPose, endPose));
+                goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
+
                 follower.followPath(goToEnd);
             }
         }
     }
 }
+ */
