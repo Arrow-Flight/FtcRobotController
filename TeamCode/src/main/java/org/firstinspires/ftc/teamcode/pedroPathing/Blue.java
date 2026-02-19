@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 
+import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
@@ -23,7 +24,7 @@ public class Blue extends OpMode {
         servoCamera.setPosition(0.4);
 
         //Set Up intake
-        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         //Set Up upper
@@ -32,8 +33,8 @@ public class Blue extends OpMode {
         upper.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set Up shooter motors
-        shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
-        shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+        shooterLeft = hardwareMap.get(DcMotor.class, "shooterLeft");
+        shooterRight = hardwareMap.get(DcMotor.class, "shooterRight");
 
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -42,10 +43,10 @@ public class Blue extends OpMode {
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 18.5);
 
-        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
-        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.004, 0, 0, 0.76));
+        pidfController.setTargetPosition(2600);
+
 
         // Set Up Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -76,7 +77,10 @@ public class Blue extends OpMode {
             if (pathState == 0 && !follower.isBusy()) {
                 currentPose = follower.getPose();
 
-                goToShoot();
+                toShoot = new Path(new BezierLine(currentPose, preShoot));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), preShoot.getHeading());
+
+                follower.followPath(toShoot);
 
                 pathTimer.resetTimer();
                 pathState = 1;
@@ -93,13 +97,15 @@ public class Blue extends OpMode {
                 toShoot = new Path(new BezierLine(currentPose, correctedTarget));
                 toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
                 follower.followPath(toShoot);
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 2;
             }
 
             // Step 3: Shoot Initial Balls
             else if (pathState == 2 && !follower.isBusy()) {
-                Shoot(telemetry);
-                pathState = 3;
+                Shoot(3);
                 subState = 1;
             }
 
@@ -112,17 +118,20 @@ public class Blue extends OpMode {
 
             // Step 5: Go to Shoot
             else if (pathState == 4 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 5;
             }
 
             // Step 6: Shoot First Spike Balls
             else if (pathState == 5 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 6;
+                Shoot(6);
                 subState = 1;
             }
 
@@ -135,17 +144,20 @@ public class Blue extends OpMode {
 
             // Step 8: Go to Shoot
             else if (pathState == 7 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 8;
             }
 
             // Step 9: Shoot Second Spike Balls
             else if (pathState == 8 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 9;
+                Shoot(9);
                 subState = 1;
             }
 
@@ -158,17 +170,20 @@ public class Blue extends OpMode {
 
             // Step 11: Go to Shoot
             else if (pathState == 10 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 11;
             }
 
             // Step 12: Shoot Third Spike Balls
             else if (pathState == 11 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 12;
+                Shoot(12);
                 subState = 1;
             }
         } else {
@@ -176,8 +191,8 @@ public class Blue extends OpMode {
                 timeoutTriggered = true;
 
                 follower.breakFollowing();
-                shooterLeft.setVelocity(0);
-                shooterRight.setVelocity(0);
+                shooterLeft.setPower(0);
+                shooterRight.setPower(0);
                 intake.setPower(0);
                 upper.setPower(0);
 
