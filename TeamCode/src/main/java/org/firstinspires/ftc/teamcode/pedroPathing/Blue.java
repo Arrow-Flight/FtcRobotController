@@ -44,7 +44,7 @@ public class Blue extends OpMode {
 
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.004, 0, 0, 0.76));
+        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.76));
         pidfController.setTargetPosition(2600);
 
 
@@ -70,6 +70,10 @@ public class Blue extends OpMode {
 
     @Override
     public void loop() {
+        vel = -getVelocity();
+        telemetry.addData("vel", vel);
+        telemetry.addData("shots", shots);
+        telemetry.update();
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {
@@ -99,6 +103,7 @@ public class Blue extends OpMode {
                 follower.followPath(toShoot);
                 pathTimer.resetTimer();
                 shots = 0;
+                spunUp = false;
                 shootState = 1;
                 pathState = 2;
             }

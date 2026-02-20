@@ -46,12 +46,14 @@ public class AutoConstants {
     public static double yError = 0;
     public static int shots;
     public static int shootState;
+    public static boolean spunUp;
+    public static double vel;
 
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
         public static Pose preShoot = new Pose(56,92,Math.toRadians(-36));
-        public static Pose shootPose = new Pose(58, 98, Math.toRadians(-36));
+        public static Pose shootPose = new Pose(62, 98, Math.toRadians(-36));
         public static Pose firstSpikeInitial = new Pose(50, 85, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(20,85, Math.toRadians(180));
         public static Pose secondSpikeInitial = new Pose(50,62, Math.toRadians(180));
@@ -79,7 +81,7 @@ public class AutoConstants {
 
     public static void Shoot(int state) {
         if (shootState == 1) {
-            pidfController.updatePosition(getVelocity());
+            pidfController.updatePosition(vel);
             pidfController.updateFeedForwardInput(0.76);
 
             double prePower = pidfController.run();
@@ -87,25 +89,20 @@ public class AutoConstants {
 
             shooterLeft.setPower(power);
             shooterRight.setPower(power);
-            pathTimer.resetTimer();
-            shootState = 2;
-        } else if (shootState == 2) {
-            if (pathTimer.getElapsedTimeSeconds() > 0.5 && pathTimer.getElapsedTimeSeconds() <= 0.75) {
+            shots = 0;
+            if (vel > 2900) {
                 intake.setPower(1);
                 upper.setPower(1);
-            }
-            else if (pathTimer.getElapsedTimeSeconds() > 0.75) {
-                intake.setPower(0);
-                upper.setPower(0);
-                shots++;
-                if (shots == 3) {
-                    shootState = 3;
-                } else {pathTimer.resetTimer();}
+                pathTimer.resetTimer();
+                shootState = 2;
             }
         }
-        else if (shootState == 3) {
+        else if (shootState == 2 && pathTimer.getElapsedTimeSeconds() >= 0.5) {
             shooterLeft.setPower(0);
             shooterRight.setPower(0);
+            intake.setPower(0);
+            upper.setPower(0);
+
             pathState = state;
         }
     }

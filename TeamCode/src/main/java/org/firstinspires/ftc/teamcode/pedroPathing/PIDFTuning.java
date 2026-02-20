@@ -1,14 +1,19 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.control.PIDFController;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.openftc.easyopencv.PipelineRecordingParameters.*;
 
 @TeleOp
+@Config
 public class PIDFTuning extends OpMode {
 
     public DcMotor left;
@@ -25,6 +30,7 @@ public class PIDFTuning extends OpMode {
     double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001};
 
     int stepIndex = 1;
+    public static double curVelocity;
 
     @Override
     public void init() {
@@ -70,7 +76,7 @@ public class PIDFTuning extends OpMode {
             P -= stepSizes[stepIndex];
         }
 
-        double curVelocity = getVelocity();
+        curVelocity = getVelocity();
 
         pidfController.setP(P);
         pidfController.setF(F);
@@ -81,22 +87,27 @@ public class PIDFTuning extends OpMode {
 
         double power = Math.max(-1.0, Math.min(1.0, prePower));
 
-        left.setPower(power);
-        right.setPower(power);
+        left.setPower(0.6);
+        right.setPower(0.6);
+
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
 
         telemetry.addData("Target velocity", curTargetVelocity);
-        telemetry.addData("Current velocity","%.2f", curVelocity);
-        telemetry.addData("Error","%.2f", pidfController.getError());
+        dashboardTelemetry.addData("Current velocity", "%.2f", curVelocity);
+        telemetry.addData("Error", "%.2f", pidfController.getError());
         telemetry.addLine("-------------------------");
-        telemetry.addData("Tuning P","%.6f (D-Pad U/D", P);
-        telemetry.addData("Tuning F","%.6f (D-Pad L/R)", F);
-        telemetry.addData("Step Size","%.6f (B Button", stepSizes[stepIndex]);
+        telemetry.addData("Tuning P", "%.6f (D-Pad U/D", P);
+        telemetry.addData("Tuning F", "%.6f (D-Pad L/R)", F);
+        telemetry.addData("Step Size", "%.6f (B Button", stepSizes[stepIndex]);
+        dashboardTelemetry.update();
+        telemetry.update();
     }
 
     private long lastPosition = 0;
     private long lastTime = 0;
     private static final int VELOCITY_BUFFER_SIZE = 5;
-    private double[] velocityBuffer = new double[VELOCITY_BUFFER_SIZE];
+    private final double[] velocityBuffer = new double[VELOCITY_BUFFER_SIZE];
     private int bufferIndex = 0;
     private int bufferFilled = 0;
 
@@ -112,9 +123,23 @@ public class PIDFTuning extends OpMode {
 
         long delta = currentPosition - lastPosition;
         double deltaTime = (currentTime - lastTime) / 1e9;
+
+        // Guard against tiny deltaTime causing velocity spikes
+        if (deltaTime < 0.001) {
+            lastTime = currentTime;
+            double weightedSum = 0, weightSum = 0;
+            for (int i = 0; i < bufferFilled; i++) {
+                int age = (bufferIndex - 1 - i + VELOCITY_BUFFER_SIZE) % VELOCITY_BUFFER_SIZE;
+                double weight = bufferFilled - age;
+                weightedSum += velocityBuffer[i] * weight;
+                weightSum += weight;
+            }
+            return weightSum > 0 ? weightedSum / weightSum : 0;
+        }
+
         double instantVelocity = (delta / deltaTime / 8192.0) * 60.0;
 
-        // Spike rejection — ignore readings that are too far from current average
+        // Spike rejection
         double currentAverage = 0;
         if (bufferFilled > 0) {
             double sum = 0;
@@ -122,15 +147,14 @@ public class PIDFTuning extends OpMode {
             currentAverage = sum / bufferFilled;
         }
 
-        if (bufferFilled == 0 || Math.abs(instantVelocity - currentAverage) < 300) {
+        if (bufferFilled == 0 || Math.abs(instantVelocity - currentAverage) < 100) {
             velocityBuffer[bufferIndex] = instantVelocity;
             bufferIndex = (bufferIndex + 1) % VELOCITY_BUFFER_SIZE;
             if (bufferFilled < VELOCITY_BUFFER_SIZE) bufferFilled++;
         }
 
-        // Weighted average — newer samples weighted higher
-        double weightedSum = 0;
-        double weightSum = 0;
+        // Weighted average
+        double weightedSum = 0, weightSum = 0;
         for (int i = 0; i < bufferFilled; i++) {
             int age = (bufferIndex - 1 - i + VELOCITY_BUFFER_SIZE) % VELOCITY_BUFFER_SIZE;
             double weight = bufferFilled - age;
