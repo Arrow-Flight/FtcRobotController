@@ -193,6 +193,7 @@ public class Blue extends OpMode {
             }
         } else {
             if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
+                currentPose = getCorrectedPose();
                 timeoutTriggered = true;
 
                 follower.breakFollowing();
@@ -201,8 +202,8 @@ public class Blue extends OpMode {
                 intake.setPower(0);
                 upper.setPower(0);
 
-                goToEnd = new Path(new BezierLine(shootPose, endPose));
-                goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
+                goToEnd = new Path(new BezierLine(currentPose, endPose));
+                goToEnd.setLinearHeadingInterpolation(currentPose.getHeading(),endPose.getHeading());
 
                 follower.followPath(goToEnd);
             }
