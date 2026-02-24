@@ -1,9 +1,10 @@
-/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
@@ -11,6 +12,7 @@ import com.qualcomm.hardware.limelightvision.*;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
 @Autonomous(preselectTeleOp="MainOpRed")
@@ -24,7 +26,7 @@ public class Red extends OpMode {
         servoCamera.setPosition(0.4);
 
         //Set Up intake
-        intake = hardwareMap.get(DcMotor.class, "intake");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setDirection(DcMotorSimple.Direction.REVERSE);
         //Set Up upper
@@ -33,8 +35,8 @@ public class Red extends OpMode {
         upper.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set Up shooter motors
-        shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
-        shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+        shooterLeft = hardwareMap.get(DcMotor.class, "shooterLeft");
+        shooterRight = hardwareMap.get(DcMotor.class, "shooterRight");
 
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -43,10 +45,10 @@ public class Red extends OpMode {
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 18.5);
 
-        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
-        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
+        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.76));
+        pidfController.setTargetPosition(2800);
+
 
         // Set Up Limelight
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -70,6 +72,11 @@ public class Red extends OpMode {
 
     @Override
     public void loop() {
+        vel = -getVelocity();
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+        dashboardTelemetry.addData("vel", vel);
+        dashboardTelemetry.update();
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {
@@ -77,7 +84,10 @@ public class Red extends OpMode {
             if (pathState == 0 && !follower.isBusy()) {
                 currentPose = follower.getPose();
 
-                goToShoot();
+                toShoot = new Path(new BezierLine(currentPose, preShoot));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), preShoot.getHeading());
+
+                follower.followPath(toShoot);
 
                 pathTimer.resetTimer();
                 pathState = 1;
@@ -94,13 +104,16 @@ public class Red extends OpMode {
                 toShoot = new Path(new BezierLine(currentPose, correctedTarget));
                 toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
                 follower.followPath(toShoot);
+                pathTimer.resetTimer();
+                shots = 0;
+                spunUp = false;
+                shootState = 1;
                 pathState = 2;
             }
 
             // Step 3: Shoot Initial Balls
             else if (pathState == 2 && !follower.isBusy()) {
-                Shoot(telemetry);
-                pathState = 3;
+                Shoot(3);
                 subState = 1;
             }
 
@@ -108,23 +121,25 @@ public class Red extends OpMode {
             else if (pathState == 3 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
 
-                collectSpike(firstSpikeInitial, firstSpikeFinal);
-                pathState = 4;
+                collectSpike(4,firstSpikeInitial, firstSpikeFinal);
             }
 
             // Step 5: Go to Shoot
             else if (pathState == 4 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 5;
             }
 
             // Step 6: Shoot First Spike Balls
             else if (pathState == 5 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 6;
+                Shoot(6);
                 subState = 1;
             }
 
@@ -132,65 +147,69 @@ public class Red extends OpMode {
             else if (pathState == 6 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
 
-                collectSpike(secondSpikeInitial, secondSpikeFinal);
-                pathState = 7;
+                collectSpike(7,secondSpikeInitial, secondSpikeFinal);
             }
 
             // Step 8: Go to Shoot
             else if (pathState == 7 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 8;
             }
 
             // Step 9: Shoot Second Spike Balls
             else if (pathState == 8 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 9;
+                Shoot(9);
                 subState = 1;
             }
 
             // Step 10:  Get Balls From Third Spike
-            else if (pathState == 7 && !follower.isBusy()) {
+            else if (pathState == 9 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
 
-                collectSpike(thirdSpikeInitial, thirdSpikeFinal);
-                pathState = 10;
+                collectSpike(10, thirdSpikeInitial, thirdSpikeFinal);
             }
 
             // Step 11: Go to Shoot
             else if (pathState == 10 && !follower.isBusy()) {
+                currentPose = getCorrectedPose();
                 intake.setPower(0);
 
                 goToShoot();
+                pathTimer.resetTimer();
+                shots = 0;
+                shootState = 1;
                 pathState = 11;
             }
 
             // Step 12: Shoot Third Spike Balls
             else if (pathState == 11 && !follower.isBusy()) {
 
-                Shoot(telemetry);
-                pathState = 12;
+                Shoot(12);
                 subState = 1;
             }
         } else {
             if (!timeoutTriggered && timeout.getElapsedTimeSeconds() >= 28) {
+                currentPose = getCorrectedPose();
                 timeoutTriggered = true;
 
                 follower.breakFollowing();
-                shooterLeft.setVelocity(0);
-                shooterRight.setVelocity(0);
+                shooterLeft.setPower(0);
+                shooterRight.setPower(0);
                 intake.setPower(0);
                 upper.setPower(0);
 
-                goToEnd = new Path(new BezierLine(shootPose, endPose));
-                goToEnd.setLinearHeadingInterpolation(shootPose.getHeading(),endPose.getHeading());
+                goToEnd = new Path(new BezierLine(currentPose, endPose));
+                goToEnd.setLinearHeadingInterpolation(currentPose.getHeading(),endPose.getHeading());
 
                 follower.followPath(goToEnd);
             }
         }
     }
 }
- */

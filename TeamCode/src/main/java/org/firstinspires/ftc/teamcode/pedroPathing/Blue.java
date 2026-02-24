@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
@@ -11,6 +12,7 @@ import com.qualcomm.hardware.limelightvision.*;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
 @Autonomous(preselectTeleOp="MainOpBlue")
@@ -45,7 +47,7 @@ public class Blue extends OpMode {
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.76));
-        pidfController.setTargetPosition(2600);
+        pidfController.setTargetPosition(2800);
 
 
         // Set Up Limelight
@@ -71,9 +73,10 @@ public class Blue extends OpMode {
     @Override
     public void loop() {
         vel = -getVelocity();
-        telemetry.addData("vel", vel);
-        telemetry.addData("shots", shots);
-        telemetry.update();
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        Telemetry dashboardTelemetry = dashboard.getTelemetry();
+        dashboardTelemetry.addData("vel", vel);
+        dashboardTelemetry.update();
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {

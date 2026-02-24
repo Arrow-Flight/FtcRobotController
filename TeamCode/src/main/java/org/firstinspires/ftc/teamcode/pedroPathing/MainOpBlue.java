@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.getVelocity;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pidfController;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.vel;
 
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
@@ -81,6 +81,7 @@ public class MainOpBlue extends LinearOpMode {
         double distance;
         boolean insideZone;
         boolean escapingZone = false;
+        boolean shootingPath = false;
         Pose escPose;
         Path escPath;
         pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.72));
@@ -91,8 +92,8 @@ public class MainOpBlue extends LinearOpMode {
         while (opModeIsActive()) {
             currentPose = follower.getPose();
             follower.update();
-
-            telemetry.addData("heading", angle(currentPose));
+            double vel = getVelocity();
+            telemetry.addData("vel", vel);
             telemetry.update();
 
             pidfController.updatePosition(vel);
@@ -160,27 +161,40 @@ public class MainOpBlue extends LinearOpMode {
                 backRight.setPower(backRightPower);
 
                 if (gamepad1.yWasPressed()) {
-                    if (!shooting) {
+                    follower.breakFollowing();
+                    shooting = !shooting;
+                }
+
+                if (shooting) {
+                    boolean driverControlling = Math.abs(gamepad1.left_stick_x) > 0.05
+                            || Math.abs(gamepad1.left_stick_y) > 0.05
+                            || Math.abs(gamepad1.right_stick_x) > 0.05;
+
+                    if (driverControlling) {
                         follower.breakFollowing();
+                        shootingPath = false; // let driver take over
+                    } else if (!shootingPath || !follower.isBusy()) {
                         Pose goTo = getShootPose(currentPose);
-                        Path shootPath = new Path(new BezierLine(currentPose, goTo));
-                        shootPath.setLinearHeadingInterpolation(currentPose.getHeading(), goTo.getHeading());
-                        follower.followPath(shootPath, true);
-                        shooting = true;
+                        double dx = currentPose.getX() - goTo.getX();
+                        double dy = currentPose.getY() - goTo.getY();
+                        if (Math.sqrt(dx*dx + dy*dy) > 3) {
+                            Path shootPath = new Path(new BezierLine(currentPose, goTo));
+                            shootPath.setLinearHeadingInterpolation(currentPose.getHeading(), goTo.getHeading());
+                            follower.followPath(shootPath);
+                            shootingPath = true;
+                        }
                     }
                 }
 
-                if (shooting && !follower.isBusy()){
+                if (gamepad1.yWasPressed()) {
                     follower.breakFollowing();
-                    shooting = false;
+                    shooting = !shooting;
+                    shootingPath = false;
                 }
 
-
-                if (!shooting) {
                     if (gamepad1.xWasPressed()) {
                         xSpin = !xSpin;
                     }
-
                     if (xSpin) {
                         shooterLeft.setPower(power);
                         shooterRight.setPower(power);
@@ -203,11 +217,10 @@ public class MainOpBlue extends LinearOpMode {
                 }
             }
         }
-    }
     public static Pose getShootPose(Pose current) {
         double goalX = 23;
         double goalY = 128;
-        double radius = 45;
+        double radius = 40;
 
         // Vector from goal to robot
         double dx = current.getX() - goalX;
@@ -228,18 +241,6 @@ public class MainOpBlue extends LinearOpMode {
 
         // Robot should face the goal
         double headingToGoal = Math.atan2(-Math.cos(angleRad), -Math.sin(angleRad));
-        return new Pose(x, y, -headingToGoal);
-    }
-
-    public static double angle(Pose current) {
-        double goalX = 23;
-        double goalY = 128;
-        double dx = current.getX() - goalX;
-        double dy = current.getY() - goalY; // will be negative since robot is below goal
-
-        // Angle from goal to robot
-        double angle = Math.atan2(dy, dx);
-
-        return Math.toDegrees(angle);
+        return new Pose(x, y, (-headingToGoal - (Math.PI/2)));
     }
 }
