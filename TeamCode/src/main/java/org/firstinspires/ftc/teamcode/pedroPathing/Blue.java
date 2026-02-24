@@ -129,7 +129,7 @@ public class Blue extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
@@ -155,7 +155,7 @@ public class Blue extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
@@ -181,7 +181,7 @@ public class Blue extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;

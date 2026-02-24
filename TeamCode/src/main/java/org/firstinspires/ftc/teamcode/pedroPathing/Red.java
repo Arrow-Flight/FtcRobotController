@@ -96,8 +96,8 @@ public class Red extends OpMode {
             // Step 2: Calculate Offsets and Fix Position
             else if (pathState ==1 && pathTimer.getElapsedTimeSeconds() > 2 && !follower.isBusy()) {
                 currentPose = follower.getPose();
-                xError = getStartingError().getX();
-                yError = getStartingError().getY();
+                xError = getStartingError(telemetry).getX();
+                yError = getStartingError(telemetry).getY();
 
                 Pose correctedTarget = new Pose(shootPose.getX() + xError, shootPose.getY() + yError, shootPose.getHeading());
 
@@ -129,7 +129,7 @@ public class Red extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
@@ -155,7 +155,7 @@ public class Red extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
@@ -181,7 +181,7 @@ public class Red extends OpMode {
                 currentPose = getCorrectedPose();
                 intake.setPower(0);
 
-                goToShoot();
+                goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;

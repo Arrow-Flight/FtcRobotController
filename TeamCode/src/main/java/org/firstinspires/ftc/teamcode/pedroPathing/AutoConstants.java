@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Blue.shootPose;
-
 import com.pedropathing.control.PIDFController;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -11,6 +9,8 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.*;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class AutoConstants {
@@ -63,21 +63,61 @@ public class AutoConstants {
         public static Pose endPose = new Pose(35,75, Math.toRadians(0));
 
         public static int pipeline = 7;
+
+        public static Pose getStartingError() {
+            LLResult llResult = limelight.getLatestResult();
+
+            if (llResult != null && llResult.isValid()) {
+                Pose3D botPose = llResult.getBotpose();
+                double xInches = botPose.getPosition().x * 39.37;
+                double yInches = botPose.getPosition().y * 39.37;
+
+                double targetX = xInches + 72;
+                double targetY = -yInches + 72;
+
+                double xError = targetX - currentPose.getX();
+                double yError = targetY - currentPose.getY();
+
+                return new Pose(xError,yError);
+            } else return new Pose(0,0);
+        }
     }
     public static class Red {
         // ===Poses===
         public static Pose startingPose = new Pose(121, 128, Math.toRadians(-144));
-        public static Pose preShoot = new Pose(99,102,Math.toRadians(-144));
-        public static Pose shootPose = new Pose(99, 102, Math.toRadians(-144));
-        public static Pose firstSpikeInitial = new Pose(95, 85, Math.toRadians(0));
+        public static Pose preShoot = new Pose(99,116,Math.toRadians(-144));
+        public static Pose shootPose = new Pose(99, 124, Math.toRadians(-144));
+        public static Pose firstSpikeInitial = new Pose(94, 85, Math.toRadians(0));
         public static Pose firstSpikeFinal = new Pose(124,85, Math.toRadians(0));
-        public static Pose secondSpikeInitial = new Pose(95,62, Math.toRadians(0));
-        public static Pose secondSpikeFinal = new Pose(134,62, Math.toRadians(0));
-        public static Pose thirdSpikeInitial = new Pose(95,40, Math.toRadians(0));
-        public static Pose thirdSpikeFinal = new Pose(134,40, Math.toRadians(0));
+        public static Pose secondSpikeInitial = new Pose(94,62, Math.toRadians(0));
+        public static Pose secondSpikeFinal = new Pose(124,62, Math.toRadians(0));
+        public static Pose thirdSpikeInitial = new Pose(94,40, Math.toRadians(0));
+        public static Pose thirdSpikeFinal = new Pose(124,40, Math.toRadians(0));
         public static Pose endPose = new Pose(115,75, Math.toRadians(180));
 
         public static int pipeline = 8;
+
+        public static Pose getStartingError(Telemetry telemetry) {
+            LLResult llResult = limelight.getLatestResult();
+
+            if (llResult != null && llResult.isValid()) {
+                Pose3D botPose = llResult.getBotpose();
+                double xInches = botPose.getPosition().x * 39.37;
+                double yInches = botPose.getPosition().y * 39.37;
+
+                telemetry.addData("xInches", xInches);
+                telemetry.addData("yInches", yInches);
+                telemetry.update();
+
+                double targetX = -xInches + 72;
+                double targetY = yInches + 72;
+
+                double xError = targetX - currentPose.getX();
+                double yError = targetY - currentPose.getY();
+
+                return new Pose(xError,yError);
+            } else return new Pose(0,0);
+        }
     }
 
     public static void Shoot(int state) {
@@ -129,29 +169,11 @@ public class AutoConstants {
         }
     }
 
-    public static void goToShoot(){
-        toShoot = new Path(new BezierLine(currentPose, shootPose));
-        toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
+    public static void goToShoot(Pose shootAt){
+        toShoot = new Path(new BezierLine(currentPose, shootAt));
+        toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
 
         follower.followPath(toShoot);
-    }
-
-    public static Pose getStartingError() {
-        LLResult llResult = limelight.getLatestResult();
-
-        if (llResult != null && llResult.isValid()) {
-            Pose3D botPose = llResult.getBotpose();
-            double xInches = botPose.getPosition().x * 39.37;
-            double yInches = botPose.getPosition().y * 39.37;
-
-            double targetX = xInches + 72;
-            double targetY = -yInches + 72;
-
-            double xError = targetX - currentPose.getX();
-            double yError = targetY - currentPose.getY();
-
-            return new Pose(xError,yError);
-        } else return new Pose(0,0);
     }
 
     public static Pose getCorrectedPose() {
