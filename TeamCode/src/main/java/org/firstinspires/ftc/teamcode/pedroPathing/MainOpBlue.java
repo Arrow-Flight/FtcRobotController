@@ -85,7 +85,7 @@ public class MainOpBlue extends LinearOpMode {
         Pose escPose;
         Path escPath;
         pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.72));
-        pidfController.setTargetPosition(2600);
+        pidfController.setTargetPosition(2800);
 
 
         waitForStart();

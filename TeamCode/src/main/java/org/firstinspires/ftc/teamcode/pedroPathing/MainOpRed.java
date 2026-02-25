@@ -1,22 +1,18 @@
-/*
 package org.firstinspires.ftc.teamcode.pedroPathing;
 
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.getCorrectedPose;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.getPoseFromLimelight;
-import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.vel;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.getVelocity;
+import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pidfController;
 
+import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
@@ -40,16 +36,13 @@ public class MainOpRed extends LinearOpMode {
         upper.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // Set Up Shooter Motors
-        DcMotorEx shooterLeft = hardwareMap.get(DcMotorEx.class, "shooterLeft");
-        DcMotorEx shooterRight = hardwareMap.get(DcMotorEx.class, "shooterRight");
+        DcMotor shooterLeft = hardwareMap.get(DcMotor.class, "shooterLeft");
+        DcMotor shooterRight = hardwareMap.get(DcMotor.class, "shooterRight");
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        PIDFCoefficients pidfCoefficients = new PIDFCoefficients(42.0, 0, 0, 18.5);
-        shooterLeft.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
-        shooterRight.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidfCoefficients);
 
         DcMotor frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         DcMotor frontRight = hardwareMap.get(DcMotor.class, "frontRight");
@@ -67,25 +60,20 @@ public class MainOpRed extends LinearOpMode {
         limelight.pipelineSwitch(7);
 
         // Set Up Follower
-        Pose start = new Pose(115,75, Math.toRadians(180));
-        Pose shootAt = new Pose(92, 92, Math.toRadians(-138));
+        Pose start = new Pose(105,75, Math.toRadians(180));
         Pose currentPose;
-        Path toShoot;
         Follower follower = Constants.createFollower(hardwareMap);
+        follower.setMaxPower(1);
         follower.setStartingPose(start);
         follower.update();
 
         // Variables
         boolean shooting = false;
         boolean xSpin = false;
-        int pathState = 0;
-        int shooterTargetVelocity = 1200;
-        int currentState = 0;
-        Pose exPose = new Pose(14, 65, Math.toRadians(0));
+        Pose exPose = new Pose(8, 82, Math.toRadians(180));
         int exR = 30;
         double diffX;
         double diffY;
-        boolean inZone = false;
         double unitX;
         double unitY;
         double escX;
@@ -93,16 +81,26 @@ public class MainOpRed extends LinearOpMode {
         double distance;
         boolean insideZone;
         boolean escapingZone = false;
+        boolean shootingPath = false;
         Pose escPose;
         Path escPath;
-        Timer pathTimer;
-        pathTimer = new Timer();
+        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.72));
+        pidfController.setTargetPosition(2800);
 
 
         waitForStart();
         while (opModeIsActive()) {
             currentPose = follower.getPose();
             follower.update();
+            double vel = getVelocity();
+            telemetry.addData("vel", vel);
+            telemetry.update();
+
+            pidfController.updatePosition(vel);
+            pidfController.updateFeedForwardInput(0.72);
+
+            double prePower = pidfController.run();
+            double power = Math.max(-1.0, Math.min(1.0, prePower));
 
             diffX = currentPose.getX() - exPose.getX();
             diffY = currentPose.getY() - exPose.getY();
@@ -135,18 +133,7 @@ public class MainOpRed extends LinearOpMode {
             }
 
 
-
-            telemetry.addData("Pose", follower.getPose());
-                telemetry.addData("xSpin", xSpin);
-                telemetry.addData("inZone", inZone);
-                telemetry.addData("diffX", diffX);
-                telemetry.addData("diffY", diffY);
-                telemetry.addData("Distance", distance);
-                telemetry.update();
-                vel = (shooterRight.getVelocity() + shooterLeft.getVelocity()) / 2;
-
-
-                if (!escapingZone) {
+            if (!escapingZone) {
 
                     double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
                     double x = gamepad1.left_stick_x;
@@ -173,96 +160,87 @@ public class MainOpRed extends LinearOpMode {
                     frontRight.setPower(frontRightPower);
                     backRight.setPower(backRightPower);
 
-                    if (gamepad1.yWasPressed()) {
-                        if (shooting) {
-                            shooting = false;
-                            follower.breakFollowing();
-                        } else {
-                            shooting = true;
-                            pathState = 0;
+                if (gamepad1.yWasPressed()) {
+                    follower.breakFollowing();
+                    shooting = !shooting;
+                }
+
+                if (shooting) {
+                    boolean driverControlling = Math.abs(gamepad1.left_stick_x) > 0.05
+                            || Math.abs(gamepad1.left_stick_y) > 0.05
+                            || Math.abs(gamepad1.right_stick_x) > 0.05;
+
+                    if (driverControlling) {
+                        follower.breakFollowing();
+                        shootingPath = false; // let driver take over
+                    } else if (!shootingPath || !follower.isBusy()) {
+                        Pose goTo = getShootPose(currentPose);
+                        double dx = currentPose.getX() - goTo.getX();
+                        double dy = currentPose.getY() - goTo.getY();
+                        if (Math.sqrt(dx*dx + dy*dy) > 3) {
+                            Path shootPath = new Path(new BezierLine(currentPose, goTo));
+                            shootPath.setLinearHeadingInterpolation(currentPose.getHeading(), goTo.getHeading());
+                            follower.followPath(shootPath);
+                            shootingPath = true;
                         }
                     }
+                }
 
+                if (gamepad1.yWasPressed()) {
+                    follower.breakFollowing();
+                    shooting = !shooting;
+                    shootingPath = false;
+                }
 
-                    if (!shooting) {
-                        if (gamepad1.xWasPressed()) {
-                            xSpin = !xSpin;
-                        }
+                if (gamepad1.xWasPressed()) {
+                    xSpin = !xSpin;
+                }
+                if (xSpin) {
+                    shooterLeft.setPower(power);
+                    shooterRight.setPower(power);
+                } else {
+                    shooterLeft.setPower(0);
+                    shooterRight.setPower(0);
+                }
 
-                        if (xSpin) {
-                            shooterLeft.setVelocity(shooterTargetVelocity);
-                            shooterRight.setVelocity(shooterTargetVelocity);
-                        } else {
-                            shooterLeft.setVelocity(0);
-                            shooterRight.setVelocity(0);
-                        }
+                if (gamepad1.left_bumper) {
+                    intake.setPower(-1);
+                } else {
+                    intake.setPower(gamepad1.left_trigger);
+                }
 
-                        if (gamepad1.left_bumper) {
-                            intake.setPower(-1);
-                        } else {
-                            intake.setPower(gamepad1.left_trigger);
-                        }
-
-                        if (gamepad1.right_bumper) {
-                            upper.setPower(-1);
-                        } else {
-                            upper.setPower(gamepad1.right_trigger);
-                        }
-                    }
-
-
-                    if (shooting) {
-                        if (pathState == 0 && !follower.isBusy()) {
-
-                            toShoot = new Path(new BezierLine(currentPose, shootAt));
-                            toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootAt.getHeading());
-
-                            follower.followPath(toShoot);
-                            pathState = 1;
-                            pathTimer.resetTimer();
-
-                        } else if (pathState == 1 && !follower.isBusy()) {
-                            if (pathTimer.getElapsedTimeSeconds() > 2) {
-
-                                Pose llPose = getPoseFromLimelight();
-
-                                if (llPose != null) {
-                                    telemetry.addData("Result:", llPose);
-
-                                    Pose corrected = getCorrectedPose(llPose, shootAt);
-                                    toShoot = new Path(new BezierLine(corrected, shootAt));
-                                    toShoot.setLinearHeadingInterpolation(corrected.getHeading(), shootAt.getHeading());
-
-                                    follower.followPath(toShoot);
-
-                                } else {
-                                    telemetry.addData("Result:", null);
-                                }
-                                telemetry.update();
-
-                                pathState = 2;
-                            }
-                        } else if (pathState == 2 && !follower.isBusy()) {
-                            shooterLeft.setVelocity(shooterTargetVelocity);
-                            shooterRight.setVelocity(shooterTargetVelocity);
-
-                            if (vel >= 1200 && currentState == 0) {
-                                currentState = 1;
-                            } else if (currentState == 1) {
-                                upper.setPower(1);
-                                intake.setPower(1);
-
-                                if (vel <= 1100) {
-                                    upper.setPower(0);
-                                    intake.setPower(0);
-                                    currentState = 0;
-                                }
-                            }
-                        }
-                    }
+                if (gamepad1.right_bumper) {
+                    upper.setPower(-1);
+                } else {
+                    upper.setPower(gamepad1.right_trigger);
                 }
             }
         }
     }
+    public static Pose getShootPose(Pose current) {
+        double goalX = 121;
+        double goalY = 128;
+        double radius = 40;
 
- */
+        // Vector from goal to robot
+        double dx = current.getX() - goalX;
+        double dy = current.getY() - goalY; // will be negative since robot is below goal
+
+        // Angle from goal to robot
+        double angle = Math.atan2(dy, dx);
+        double deg = Math.toDegrees(angle);
+
+        // Clamp to your valid shooting arc, adjust these bounds to your field layout
+        double clampDeg = Math.max(0, Math.min(45, deg));
+
+        double angleRad = Math.toRadians(clampDeg);
+
+        // Point on the arc centered on the goal
+        double x = goalX + radius * Math.cos(angleRad);
+        double y = goalY + radius * Math.sin(angleRad);
+
+        // Robot should face the goal
+        double headingToGoal = Math.atan2(-Math.cos(angleRad), -Math.sin(angleRad));
+        return new Pose(x, y, (-headingToGoal - (Math.PI/2)));
+    }
+}
