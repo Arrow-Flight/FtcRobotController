@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.Red.*;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.*;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.*;
 import com.pedropathing.paths.Path;
@@ -12,7 +11,6 @@ import com.qualcomm.hardware.limelightvision.*;
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import com.qualcomm.robotcore.hardware.*;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
 @Autonomous(preselectTeleOp="MainOpRed")
@@ -73,10 +71,8 @@ public class Red extends OpMode {
     @Override
     public void loop() {
         vel = -getVelocity();
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        Telemetry dashboardTelemetry = dashboard.getTelemetry();
-        dashboardTelemetry.addData("vel", vel);
-        dashboardTelemetry.update();
+        telemetry.addData("vel", vel);
+        telemetry.update();
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {
@@ -84,8 +80,8 @@ public class Red extends OpMode {
             if (pathState == 0 && !follower.isBusy()) {
                 currentPose = follower.getPose();
 
-                toShoot = new Path(new BezierLine(currentPose, preShoot));
-                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), preShoot.getHeading());
+                toShoot = new Path(new BezierLine(currentPose, shootPose));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
 
                 follower.followPath(toShoot);
 
@@ -95,14 +91,13 @@ public class Red extends OpMode {
 
             // Step 2: Calculate Offsets and Fix Position
             else if (pathState ==1 && pathTimer.getElapsedTimeSeconds() > 2 && !follower.isBusy()) {
-                currentPose = follower.getPose();
-                xError = getStartingError(telemetry).getX();
-                yError = getStartingError(telemetry).getY();
+                xError = getStartingError().getX();
+                yError = getStartingError().getY();
 
-                Pose correctedTarget = new Pose(shootPose.getX() + xError, shootPose.getY() + yError, shootPose.getHeading());
+                currentPose = getCorrectedPose();
 
-                toShoot = new Path(new BezierLine(currentPose, correctedTarget));
-                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
+                toShoot = new Path(new BezierLine(currentPose, shootPose));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
                 follower.followPath(toShoot);
                 pathTimer.resetTimer();
                 shots = 0;

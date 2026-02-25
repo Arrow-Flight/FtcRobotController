@@ -84,8 +84,8 @@ public class Blue extends OpMode {
             if (pathState == 0 && !follower.isBusy()) {
                 currentPose = follower.getPose();
 
-                toShoot = new Path(new BezierLine(currentPose, preShoot));
-                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), preShoot.getHeading());
+                toShoot = new Path(new BezierLine(currentPose, shootPose));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
 
                 follower.followPath(toShoot);
 
@@ -99,10 +99,10 @@ public class Blue extends OpMode {
                 xError = getStartingError().getX();
                 yError = getStartingError().getY();
 
-                Pose correctedTarget = new Pose(shootPose.getX() + xError, shootPose.getY() + yError, shootPose.getHeading());
+                currentPose = getCorrectedPose();
 
-                toShoot = new Path(new BezierLine(currentPose, correctedTarget));
-                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), correctedTarget.getHeading());
+                toShoot = new Path(new BezierLine(currentPose, shootPose));
+                toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
                 follower.followPath(toShoot);
                 pathTimer.resetTimer();
                 shots = 0;

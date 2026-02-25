@@ -10,7 +10,6 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.hardware.*;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 public class AutoConstants {
@@ -52,7 +51,6 @@ public class AutoConstants {
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
-        public static Pose preShoot = new Pose(45,102,Math.toRadians(-36));
         public static Pose shootPose = new Pose(45, 102, Math.toRadians(-36));
         public static Pose firstSpikeInitial = new Pose(50, 85, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(20,85, Math.toRadians(180));
@@ -85,29 +83,24 @@ public class AutoConstants {
     public static class Red {
         // ===Poses===
         public static Pose startingPose = new Pose(121, 128, Math.toRadians(-144));
-        public static Pose preShoot = new Pose(99,116,Math.toRadians(-144));
-        public static Pose shootPose = new Pose(99, 124, Math.toRadians(-144));
-        public static Pose firstSpikeInitial = new Pose(94, 85, Math.toRadians(0));
-        public static Pose firstSpikeFinal = new Pose(124,85, Math.toRadians(0));
-        public static Pose secondSpikeInitial = new Pose(94,62, Math.toRadians(0));
-        public static Pose secondSpikeFinal = new Pose(124,62, Math.toRadians(0));
-        public static Pose thirdSpikeInitial = new Pose(94,40, Math.toRadians(0));
-        public static Pose thirdSpikeFinal = new Pose(124,40, Math.toRadians(0));
-        public static Pose endPose = new Pose(115,75, Math.toRadians(180));
+        public static Pose shootPose = new Pose(99, 116, Math.toRadians(-144));
+        public static Pose firstSpikeInitial = new Pose(94, 90, Math.toRadians(0));
+        public static Pose firstSpikeFinal = new Pose(124,90, Math.toRadians(0));
+        public static Pose secondSpikeInitial = new Pose(94,67, Math.toRadians(0));
+        public static Pose secondSpikeFinal = new Pose(124,67, Math.toRadians(0));
+        public static Pose thirdSpikeInitial = new Pose(94,45, Math.toRadians(0));
+        public static Pose thirdSpikeFinal = new Pose(124,45, Math.toRadians(0));
+        public static Pose endPose = new Pose(105,75, Math.toRadians(180));
 
         public static int pipeline = 8;
 
-        public static Pose getStartingError(Telemetry telemetry) {
+        public static Pose getStartingError() {
             LLResult llResult = limelight.getLatestResult();
 
             if (llResult != null && llResult.isValid()) {
                 Pose3D botPose = llResult.getBotpose();
                 double xInches = botPose.getPosition().x * 39.37;
                 double yInches = botPose.getPosition().y * 39.37;
-
-                telemetry.addData("xInches", xInches);
-                telemetry.addData("yInches", yInches);
-                telemetry.update();
 
                 double targetX = -xInches + 72;
                 double targetY = yInches + 72;
