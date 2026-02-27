@@ -70,8 +70,8 @@ public class MainOpRed extends LinearOpMode {
         // Variables
         boolean shooting = false;
         boolean xSpin = false;
-        Pose exPose = new Pose(8, 82, Math.toRadians(180));
-        int exR = 30;
+        Pose exPose = new Pose(8, 84, Math.toRadians(180));
+        int exR = 24;
         double diffX;
         double diffY;
         double unitX;
@@ -84,6 +84,8 @@ public class MainOpRed extends LinearOpMode {
         boolean shootingPath = false;
         Pose escPose;
         Path escPath;
+        Pose parkPose = new Pose(45, 38, Math.toRadians(5));
+        Path parkPath;
         pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.72));
         pidfController.setTargetPosition(2800);
 
@@ -165,6 +167,13 @@ public class MainOpRed extends LinearOpMode {
                     shooting = !shooting;
                 }
 
+                if (gamepad1.bWasPressed()) {
+                    follower.breakFollowing();
+                    parkPath = new Path(new BezierLine(currentPose, parkPose));
+                    parkPath.setLinearHeadingInterpolation(currentPose.getHeading(), parkPose.getHeading());
+                    follower.followPath(parkPath);
+                }
+
                 if (shooting) {
                     boolean driverControlling = Math.abs(gamepad1.left_stick_x) > 0.05
                             || Math.abs(gamepad1.left_stick_y) > 0.05
@@ -212,34 +221,47 @@ public class MainOpRed extends LinearOpMode {
                 if (gamepad1.right_bumper) {
                     upper.setPower(-1);
                 } else {
-                    upper.setPower(gamepad1.right_trigger);
+                    upper.setPower(Math.min(gamepad1.right_trigger, 0.75));
                 }
             }
         }
     }
     public static Pose getShootPose(Pose current) {
-        double goalX = 121;
-        double goalY = 128;
+        double goalX = 132;
+        double goalY = 136;
         double radius = 40;
+        double firstAngle = -135;
+        double secondAngle = 170;
 
-        // Vector from goal to robot
         double dx = current.getX() - goalX;
         double dy = current.getY() - goalY; // will be negative since robot is below goal
 
-        // Angle from goal to robot
         double angle = Math.atan2(dy, dx);
         double deg = Math.toDegrees(angle);
 
-        // Clamp to your valid shooting arc, adjust these bounds to your field layout
-        double clampDeg = Math.max(0, Math.min(45, deg));
+        double clampDeg;
+
+        while (deg > 180) deg -= 360;
+        while (deg < -180) deg += 360;
+
+        boolean inArc = deg >= -180 && deg <= -firstAngle || deg >= secondAngle && deg <= 180;
+
+        if (inArc) {
+            clampDeg = deg;
+        } else {
+            double distToFirstAngle = Math.abs(deg - (firstAngle));
+            if (distToFirstAngle > 180) distToFirstAngle = 360 - distToFirstAngle;
+            double distToSecondAngle = Math.abs(deg - secondAngle);
+            if (distToSecondAngle > 180) distToSecondAngle = 360 - distToSecondAngle;
+
+            clampDeg = (distToFirstAngle < distToSecondAngle) ? firstAngle : secondAngle;
+        }
 
         double angleRad = Math.toRadians(clampDeg);
 
-        // Point on the arc centered on the goal
         double x = goalX + radius * Math.cos(angleRad);
         double y = goalY + radius * Math.sin(angleRad);
 
-        // Robot should face the goal
         double headingToGoal = Math.atan2(-Math.cos(angleRad), -Math.sin(angleRad));
         return new Pose(x, y, (-headingToGoal - (Math.PI/2)));
     }

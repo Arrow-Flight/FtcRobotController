@@ -90,7 +90,7 @@ public class Red extends OpMode {
             }
 
             // Step 2: Calculate Offsets and Fix Position
-            else if (pathState ==1 && pathTimer.getElapsedTimeSeconds() > 2 && !follower.isBusy()) {
+            else if (pathState == 1 && pathTimer.getElapsedTimeSeconds() > 2 && !follower.isBusy()) {
                 xError = getStartingError().getX();
                 yError = getStartingError().getY();
 
@@ -122,13 +122,13 @@ public class Red extends OpMode {
             // Step 5: Go to Shoot
             else if (pathState == 4 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
-                intake.setPower(0);
 
                 goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
                 pathState = 5;
+                intake.setPower(0);
             }
 
             // Step 6: Shoot First Spike Balls
@@ -148,13 +148,14 @@ public class Red extends OpMode {
             // Step 8: Go to Shoot
             else if (pathState == 7 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
-                intake.setPower(0);
+
 
                 goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
                 pathState = 8;
+                intake.setPower(0);
             }
 
             // Step 9: Shoot Second Spike Balls
@@ -174,13 +175,13 @@ public class Red extends OpMode {
             // Step 11: Go to Shoot
             else if (pathState == 10 && !follower.isBusy()) {
                 currentPose = getCorrectedPose();
-                intake.setPower(0);
 
                 goToShoot(shootPose);
                 pathTimer.resetTimer();
                 shots = 0;
                 shootState = 1;
                 pathState = 11;
+                intake.setPower(0);
             }
 
             // Step 12: Shoot Third Spike Balls

@@ -52,12 +52,12 @@ public class AutoConstants {
         // ===Poses===
         public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
         public static Pose shootPose = new Pose(45, 102, Math.toRadians(-36));
-        public static Pose firstSpikeInitial = new Pose(50, 85, Math.toRadians(180));
-        public static Pose firstSpikeFinal = new Pose(20,85, Math.toRadians(180));
-        public static Pose secondSpikeInitial = new Pose(50,62, Math.toRadians(180));
-        public static Pose secondSpikeFinal = new Pose(20,62, Math.toRadians(180));
-        public static Pose thirdSpikeInitial = new Pose(50,40, Math.toRadians(180));
-        public static Pose thirdSpikeFinal = new Pose(20,40, Math.toRadians(180));
+        public static Pose firstSpikeInitial = new Pose(50, 86, Math.toRadians(180));
+        public static Pose firstSpikeFinal = new Pose(20,86, Math.toRadians(180));
+        public static Pose secondSpikeInitial = new Pose(50,63, Math.toRadians(180));
+        public static Pose secondSpikeFinal = new Pose(18,61, Math.toRadians(180));
+        public static Pose thirdSpikeInitial = new Pose(50,41, Math.toRadians(180));
+        public static Pose thirdSpikeFinal = new Pose(18,41, Math.toRadians(180));
         public static Pose endPose = new Pose(35,75, Math.toRadians(0));
 
         public static int pipeline = 7;
@@ -83,13 +83,13 @@ public class AutoConstants {
     public static class Red {
         // ===Poses===
         public static Pose startingPose = new Pose(121, 128, Math.toRadians(-144));
-        public static Pose shootPose = new Pose(99, 116, Math.toRadians(-144));
-        public static Pose firstSpikeInitial = new Pose(94, 90, Math.toRadians(0));
-        public static Pose firstSpikeFinal = new Pose(124,90, Math.toRadians(0));
-        public static Pose secondSpikeInitial = new Pose(94,67, Math.toRadians(0));
-        public static Pose secondSpikeFinal = new Pose(124,67, Math.toRadians(0));
-        public static Pose thirdSpikeInitial = new Pose(94,45, Math.toRadians(0));
-        public static Pose thirdSpikeFinal = new Pose(124,45, Math.toRadians(0));
+        public static Pose shootPose = new Pose(99, 113, Math.toRadians(-144));
+        public static Pose firstSpikeInitial = new Pose(90, 88, Math.toRadians(-5));
+        public static Pose firstSpikeFinal = new Pose(124,88, Math.toRadians(-5));
+        public static Pose secondSpikeInitial = new Pose(94,64, Math.toRadians(-5));
+        public static Pose secondSpikeFinal = new Pose(126,62, Math.toRadians(-5));
+        public static Pose thirdSpikeInitial = new Pose(94,41, Math.toRadians(-5));
+        public static Pose thirdSpikeFinal = new Pose(126,38, Math.toRadians(-5));
         public static Pose endPose = new Pose(105,75, Math.toRadians(180));
 
         public static int pipeline = 8;
@@ -126,7 +126,7 @@ public class AutoConstants {
             shots = 0;
             if (vel > 2800) {
                 intake.setPower(1);
-                upper.setPower(0.5);
+                upper.setPower(0.75);
                 pathTimer.resetTimer();
                 shootState = 2;
             }
