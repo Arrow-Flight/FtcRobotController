@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.pedroPathing;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.getVelocity;
 import static org.firstinspires.ftc.teamcode.pedroPathing.AutoConstants.pidfController;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.control.PIDFController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
@@ -17,8 +18,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
+@Config
 @TeleOp
 public class MainOpBlue extends LinearOpMode {
+
     @Override
     public void runOpMode() {
         // Set Up Camera Servo
@@ -72,6 +75,7 @@ public class MainOpBlue extends LinearOpMode {
         boolean xSpin = false;
         Pose exPose = new Pose(136, 84, Math.toRadians(0));
         int exR = 24;
+        int slowing = 1;
         double diffX;
         double diffY;
         double unitX;
@@ -82,10 +86,9 @@ public class MainOpBlue extends LinearOpMode {
         boolean insideZone;
         boolean escapingZone = false;
         boolean shootingPath = false;
+        boolean boxing = false;
         Pose escPose;
         Path escPath;
-        Pose parkPose = new Pose(111, 42, Math.toRadians(5));
-        Path parkPath;
         pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.002, 0, 0, 0.72));
         pidfController.setTargetPosition(2800);
 
@@ -151,7 +154,7 @@ public class MainOpBlue extends LinearOpMode {
                 rotX = rotX * 1.1;
 
 
-                double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+                double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1) * slowing;
                 double frontLeftPower = (rotY + rotX + rx) / denominator;
                 double backLeftPower = (rotY - rotX + rx) / denominator;
                 double frontRightPower = (rotY - rotX - rx) / denominator;
@@ -169,10 +172,11 @@ public class MainOpBlue extends LinearOpMode {
 
                 if (gamepad1.bWasPressed()) {
                     follower.breakFollowing();
-                    parkPath = new Path(new BezierLine(currentPose, parkPose));
-                    parkPath.setLinearHeadingInterpolation(currentPose.getHeading(), parkPose.getHeading());
-                    follower.followPath(parkPath);
+                    boxing = !boxing;
                 }
+                if (boxing) {
+                    slowing = 6;
+                } else slowing = 1;
 
                 if (shooting) {
                     boolean driverControlling = Math.abs(gamepad1.left_stick_x) > 0.05
