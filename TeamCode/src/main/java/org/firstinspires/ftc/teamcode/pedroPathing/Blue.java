@@ -41,8 +41,8 @@ public class Blue extends OpMode {
         shooterLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooterRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        shooterLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooterLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooterRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -73,10 +73,14 @@ public class Blue extends OpMode {
     @Override
     public void loop() {
         vel = -getVelocity();
+        /*
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();
         dashboardTelemetry.addData("vel", vel);
         dashboardTelemetry.update();
+         */
+        telemetry.addData("vel", vel);
+        telemetry.update();
         follower.update();
 
         if (timeout.getElapsedTimeSeconds() < 27) {

@@ -51,7 +51,7 @@ public class AutoConstants {
     public static class Blue {
         // ===Poses===
         public static Pose startingPose = new Pose(23, 128, Math.toRadians(-36));
-        public static Pose shootPose = new Pose(45, 102, Math.toRadians(-36));
+        public static Pose shootPose = new Pose(49, 102, Math.toRadians(-36));
         public static Pose firstSpikeInitial = new Pose(50, 86, Math.toRadians(180));
         public static Pose firstSpikeFinal = new Pose(20,86, Math.toRadians(180));
         public static Pose secondSpikeInitial = new Pose(50,63, Math.toRadians(180));
@@ -82,8 +82,8 @@ public class AutoConstants {
     }
     public static class Red {
         // ===Poses===
-        public static Pose startingPose = new Pose(121, 128, Math.toRadians(-144));
-        public static Pose shootPose = new Pose(99, 113, Math.toRadians(-144));
+        public static Pose startingPose = new Pose(121, 136, Math.toRadians(-144));
+        public static Pose shootPose = new Pose(95, 102, Math.toRadians(-144));
         public static Pose firstSpikeInitial = new Pose(90, 88, Math.toRadians(-5));
         public static Pose firstSpikeFinal = new Pose(124,88, Math.toRadians(-5));
         public static Pose secondSpikeInitial = new Pose(94,64, Math.toRadians(-5));
@@ -116,7 +116,7 @@ public class AutoConstants {
     public static void Shoot(int state) {
         if (shootState == 1) {
             pidfController.updatePosition(vel);
-            pidfController.updateFeedForwardInput(0.76);
+            pidfController.updateFeedForwardInput(pidfController.F());
 
             double prePower = pidfController.run();
             double power = Math.max(-1.0, Math.min(1.0, prePower));
@@ -124,7 +124,7 @@ public class AutoConstants {
             shooterLeft.setPower(power);
             shooterRight.setPower(power);
             shots = 0;
-            if (vel > 2800) {
+            if (vel >= 2800) {
                 intake.setPower(1);
                 upper.setPower(0.75);
                 pathTimer.resetTimer();

@@ -14,7 +14,7 @@ import com.qualcomm.robotcore.hardware.*;
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
 @Autonomous(preselectTeleOp="MainOpRed")
-public class RedShort extends OpMode {
+public class BlueClose extends OpMode {
 
     @Override
     public void init() {
@@ -53,7 +53,7 @@ public class RedShort extends OpMode {
         limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose);
+        follower.setStartingPose(new Pose(90, 8, Math.toDegrees(90)));
         pathState = 0;
 
         // Add Timers
@@ -79,6 +79,7 @@ public class RedShort extends OpMode {
         // Step 1: Initial Move
         if (pathState == 0 && !follower.isBusy()) {
             currentPose = follower.getPose();
+            Pose shootPose = new Pose(108, 10, Math.toDegrees(90));
 
             toShoot = new Path(new BezierLine(currentPose, shootPose));
             toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());

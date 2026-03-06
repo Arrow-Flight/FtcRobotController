@@ -99,7 +99,7 @@ public class MainOpRed extends LinearOpMode {
             telemetry.update();
 
             pidfController.updatePosition(vel);
-            pidfController.updateFeedForwardInput(0.72);
+            pidfController.updateFeedForwardInput(pidfController.F());
 
             double prePower = pidfController.run();
             double power = Math.max(-1.0, Math.min(1.0, prePower));

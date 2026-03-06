@@ -45,7 +45,7 @@ public class PIDFTuning extends OpMode {
 
         throughBore = hardwareMap.get(DcMotorEx.class, "intake");
 
-        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(0.003, 0, 0, 0.702));
+        pidfController = new PIDFController(new com.pedropathing.control.PIDFCoefficients(P, 0, 0, F));
         pidfController.setTargetPosition(curTargetVelocity);
     }
 
@@ -80,15 +80,17 @@ public class PIDFTuning extends OpMode {
 
         pidfController.setP(P);
         pidfController.setF(F);
+        double normalizedTarget = curTargetVelocity;
+        pidfController.setTargetPosition(normalizedTarget);
         pidfController.updatePosition(curVelocity);
-        pidfController.updateFeedForwardInput(F);
+        pidfController.updateFeedForwardInput(1.0);
 
         double prePower = pidfController.run();
 
         double power = Math.max(-1.0, Math.min(1.0, prePower));
 
-        left.setPower(0.6);
-        right.setPower(0.6);
+        left.setPower(power);
+        right.setPower(power);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         Telemetry dashboardTelemetry = dashboard.getTelemetry();

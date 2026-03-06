@@ -13,8 +13,8 @@ import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.pedro.Constants;
 
-@Autonomous(preselectTeleOp="MainOpBlue")
-public class BlueShort extends OpMode {
+@Autonomous(preselectTeleOp="MainOpRed")
+public class RedClose extends OpMode {
 
     @Override
     public void init() {
@@ -53,7 +53,7 @@ public class BlueShort extends OpMode {
         limelight.pipelineSwitch(pipeline); // use your AprilTag pipeline
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(startingPose);
+        follower.setStartingPose(new Pose(56,8, Math.toDegrees(90)));
         pathState = 0;
 
         // Add Timers
@@ -79,14 +79,15 @@ public class BlueShort extends OpMode {
         // Step 1: Initial Move
         if (pathState == 0 && !follower.isBusy()) {
             currentPose = follower.getPose();
+            Pose shootPose = new Pose(36, 10, Math.toDegrees(90));
 
-            toShoot = new Path(new BezierLine(currentPose, shootPose));
+            Path toShoot = new Path(new BezierLine(currentPose, shootPose));
             toShoot.setLinearHeadingInterpolation(currentPose.getHeading(), shootPose.getHeading());
 
             follower.followPath(toShoot);
 
             pathTimer.resetTimer();
-            pathState = 1;
+            pathState = 3;
         }
 
         // Step 2: Calculate Offsets and Fix Position
